@@ -1,6 +1,8 @@
 from netbox.views import generic
-from dcim.models import Device
+from dcim.models import Device, Site
+from tenancy.models import Tenant
 from virtualization.models import VirtualMachine
+
 from utilities.views import ViewTab, register_model_view
 from django.contrib.contenttypes.models import ContentType
 
@@ -79,23 +81,52 @@ class VulnerabilityDeleteView(generic.ObjectDeleteView):
     queryset = models.Vulnerability.objects.all()
 
 
+# Generic Vulnerability List View
 
 
-@register_model_view(Device, name='device-vulnerability_list', path='device-vulnerability_list')
-class DeviceVulnerabilityListView(generic.ObjectChildrenView):
-    
-    queryset = Device.objects.all()
-    child_model = models.VulnerabilityAssignment
-    table = tables.VulnerabilityAssignmentTable
-    template_name = 'nb_risk/device_vulnerability_list.html'
-    
-    tab = ViewTab(
-        label='Vulnerabilities',
-        badge=lambda obj: models.VulnerabilityAssignment.objects.filter(asset_object_type=ContentType.objects.get_for_model(obj), asset_id=obj.id).count(),
-        hide_if_empty=True
-    )
+def create_view(model, base_template_name):
 
-    def get_children(self, request, parent):
-        childrens = self.child_model.objects.filter(asset_object_type=ContentType.objects.get_for_model(parent), asset_id=parent.id)
-        return childrens
+    name = f"{model._meta.model_name}-vulnerability_list"
+    path = f"{model._meta.model_name}-vulnerability_list"
 
+    class View(generic.ObjectChildrenView):
+        def __init__(self, *args, **kwargs):
+            self.queryset = model.objects.all()
+            self.child_model = models.VulnerabilityAssignment
+            self.table = tables.VulnerabilityAssignmentTable
+            self.template_name = "nb_risk/generic_vulnerability_list.html"
+            super().__init__(*args, **kwargs)
+
+        tab = ViewTab(
+            label="Vulnerabilities",
+            badge=lambda obj: models.VulnerabilityAssignment.objects.filter(
+                asset_object_type=ContentType.objects.get_for_model(obj),
+                asset_id=obj.id,
+            ).count(),
+            hide_if_empty=True,
+        )
+
+        def get_children(self, request, parent):
+            childrens = self.child_model.objects.filter(
+                asset_object_type=ContentType.objects.get_for_model(parent),
+                asset_id=parent.id,
+            )
+            return childrens
+
+        def get_extra_context(self, request, instance):
+            data = {
+                "base_template_name": base_template_name,
+            }
+            return data
+
+    register_model_view(model, name=name, path=path)(View)
+
+
+supported_assets = [
+    {"model": Device, "template": "dcim/device.html"},
+    {"model": VirtualMachine, "template": "virtualization/virtualmachine.html"},
+    {"model": Site, "template": "dcim/site.html"},
+    {"model": Tenant, "template": "tenancy/tenant.html"},
+]
+for supported_asset in supported_assets:
+    create_view(supported_asset["model"], supported_asset["template"])

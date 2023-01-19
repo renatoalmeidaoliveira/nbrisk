@@ -7,7 +7,9 @@ from virtualization.models import VirtualMachine
 from utilities.forms import (
     BootstrapMixin,
     DatePicker,
+    CommentField,
     DynamicModelMultipleChoiceField,
+    SlugField,
     DynamicModelChoiceField,
 )
 from utilities.forms.fields import DynamicModelChoiceField
@@ -86,16 +88,18 @@ class VulnerabilityFilterForm(NetBoxModelFilterSetForm):
     class Meta:
         fields = ["name", "cve"]
 
+
 # VulnerabilityAssignment Forms
+
 
 class VulnerabilityAssignmentForm(NetBoxModelForm):
     class Meta:
         model = models.VulnerabilityAssignment
         fields = ["asset_object_type", "asset_id", "vulnerability"]
 
+
 class VulnerabilityAssignmentFilterForm(NetBoxModelFilterSetForm):
     model = models.VulnerabilityAssignment
 
     class Meta:
         fields = ["vulnerability"]
-        

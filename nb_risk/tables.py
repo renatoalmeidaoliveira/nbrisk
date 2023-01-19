@@ -30,7 +30,9 @@ class VulnerabilityTable(NetBoxTable):
         model = models.Vulnerability
         fields = ["name", "cve", "description", "asset"]
 
+
 # VulnerabilityAssignment Tables
+
 
 class VulnerabilityAssignmentTable(NetBoxTable):
 

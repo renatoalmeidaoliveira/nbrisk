@@ -43,11 +43,12 @@ class Vulnerability(NetBoxModel):
     description = models.CharField("Description", max_length=100, blank=True)
     notes = models.TextField("Notes", blank=True)
 
-
     def __str__(self):
         return self.name
 
+
 # VulnearbilityAssingment Model
+
 
 class VulnerabilityAssignment(NetBoxModel):
 
@@ -69,12 +70,14 @@ class VulnerabilityAssignment(NetBoxModel):
         related_name="vulnerability_assignments",
         verbose_name="Vulnerability",
     )
+
     @property
     def name(self):
         return f"{self.asset} - {self.vulnerability.name}"
 
     def __str__(self):
         return f"{self.asset} - {self.vulnerability.name}"
+
 
 # ThreatEvent Model
 

@@ -27,7 +27,9 @@ class VulnerabilityFilterSet(NetBoxModelFilterSet):
         model = models.Vulnerability
         fields = ["name", "cve"]
 
+
 # VulnerabilityAssignment Filters
+
 
 class VulnerabilityAssignmentFilterSet(NetBoxModelFilterSet):
     class Meta:
