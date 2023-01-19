@@ -1,0 +1,1 @@
+recursive-include nb_risk/templates *.html
