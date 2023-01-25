@@ -15,4 +15,15 @@ Not ready
 
 ## Screenshots
 
-![image](https://user-images.githubusercontent.com/16046203/213355075-d8e51f8e-acbd-4af9-bdd7-92dfecc51185.png)
+### Vulnerability View
+
+![image](https://user-images.githubusercontent.com/16046203/214468549-afc2de89-2d1e-412e-96d5-839ac47d4d9e.png)
+
+### Affected Assets
+
+![image](https://user-images.githubusercontent.com/16046203/214468616-4d45b1ff-9887-43b9-9c17-0047ff5a5f02.png)
+
+### Device Vulnerabilities
+
+![image](https://user-images.githubusercontent.com/16046203/214468700-81d21799-8381-4fca-a9bf-204a41211736.png)
+
