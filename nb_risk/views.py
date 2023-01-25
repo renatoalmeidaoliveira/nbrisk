@@ -5,6 +5,7 @@ from virtualization.models import VirtualMachine
 
 from utilities.views import ViewTab, register_model_view
 from django.contrib.contenttypes.models import ContentType
+from django.shortcuts import get_object_or_404
 
 import logging
 
@@ -57,12 +58,29 @@ class ThreatEventEditView(generic.ObjectEditView):
 class ThreatEventDeleteView(generic.ObjectDeleteView):
     queryset = models.ThreatEvent.objects.all()
 
+class ThreatEventBulkDeleteView(generic.BulkDeleteView):
+    queryset = models.ThreatEvent.objects.all()
+    table = tables.ThreatEventTable
+
 
 # Vulnerability Views
 
 
 class VulnerabilityView(generic.ObjectView):
     queryset = models.Vulnerability.objects.all()
+
+class VulnerabilityAffectedAssetsView(generic.ObjectView):
+    queryset = models.Vulnerability.objects.all()
+    template_name = "nb_risk/vulnerability_affected_assets.html"
+
+    def get_extra_context(self, request, instance):
+        assets = models.VulnerabilityAssignment.objects.filter(vulnerability=instance)
+        table = tables.VulnerabilityAssignmentListTable(assets)
+        data = {
+            "tab" : "affected_assets",
+            "table": table,
+        }
+        return data
 
 
 class VulnerabilityListView(generic.ObjectListView):
@@ -80,6 +98,9 @@ class VulnerabilityEditView(generic.ObjectEditView):
 class VulnerabilityDeleteView(generic.ObjectDeleteView):
     queryset = models.Vulnerability.objects.all()
 
+class VulnerabilityBulkDeleteView(generic.BulkDeleteView):
+    queryset = models.Vulnerability.objects.all()
+    table = tables.VulnerabilityTable
 
 # Generic Vulnerability List View
 
@@ -130,3 +151,26 @@ supported_assets = [
 ]
 for supported_asset in supported_assets:
     create_view(supported_asset["model"], supported_asset["template"])
+
+# VulnerabilityAssignment Views
+
+class VulnerabilityAssignmentEditView(generic.ObjectEditView):
+    queryset = models.VulnerabilityAssignment.objects.all()
+    form = forms.VulnerabilityAssignmentForm
+    template_name = 'nb_risk/generic_vulnerability_assignment_edit.html'
+
+    def alter_object(self, instance, request, args, kwargs):
+        if not instance.pk:
+            # Assign the object based on URL kwargs
+            content_type = get_object_or_404(ContentType, pk=request.GET.get('asset_object_type'))
+            instance.object = get_object_or_404(content_type.model_class(), pk=request.GET.get('asset_id'))
+        return instance
+
+    def get_extra_addanother_params(self, request):
+        return {
+            'asset_object_type': request.GET.get('asset_object_type'),
+            'asset_id': request.GET.get('asset_id'),
+        }
+
+class VulnerabilityAssignmentDeleteView(generic.ObjectDeleteView):
+    queryset = models.VulnerabilityAssignment.objects.all()

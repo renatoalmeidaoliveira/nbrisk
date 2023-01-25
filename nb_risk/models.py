@@ -32,6 +32,11 @@ class ThreatSource(NetBoxModel):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return reverse(
+            "plugins:nb_risk:threatsource", args=[self.pk]
+        )
+
 
 # Vulnerability Model
 
@@ -45,7 +50,14 @@ class Vulnerability(NetBoxModel):
 
     def __str__(self):
         return self.name
+    
+    def get_absolute_url(self):
+        return reverse(
+            "plugins:nb_risk:vulnerability", args=[self.pk]
+        )
 
+    class Meta:
+        verbose_name_plural = "Vulnerabilities"
 
 # VulnearbilityAssingment Model
 
@@ -77,6 +89,14 @@ class VulnerabilityAssignment(NetBoxModel):
 
     def __str__(self):
         return f"{self.asset} - {self.vulnerability.name}"
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=('asset_object_type', 'asset_id', 'vulnerability'),
+                name='%(app_label)s_%(class)s_unique_object_vulnerability'
+            ),
+        )
 
 
 # ThreatEvent Model
@@ -119,3 +139,9 @@ class ThreatEvent(NetBoxModel):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse(
+            "plugins:nb_risk:threatevent", args=[self.pk]
+        )
+

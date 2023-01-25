@@ -12,8 +12,6 @@ from utilities.forms import (
     SlugField,
     DynamicModelChoiceField,
 )
-from utilities.forms.fields import DynamicModelChoiceField
-
 
 from . import models, choices
 
@@ -45,6 +43,12 @@ class ThreatSourceFilterForm(NetBoxModelFilterSetForm):
 
 
 class ThreatEventForm(NetBoxModelForm):
+
+    vulnerability = DynamicModelMultipleChoiceField(
+        queryset=models.VulnerabilityAssignment.objects.all(),
+        required=True,
+    )
+
     class Meta:
         model = models.ThreatEvent
         fields = [
@@ -61,6 +65,8 @@ class ThreatEventForm(NetBoxModelForm):
 
 class ThreatEventFilterForm(NetBoxModelFilterSetForm):
     model = models.ThreatEvent
+
+
 
     class Meta:
         fields = [
@@ -92,10 +98,20 @@ class VulnerabilityFilterForm(NetBoxModelFilterSetForm):
 # VulnerabilityAssignment Forms
 
 
-class VulnerabilityAssignmentForm(NetBoxModelForm):
+class VulnerabilityAssignmentForm(BootstrapMixin, forms.ModelForm):
+
+    vulnerability = DynamicModelChoiceField(
+        queryset=models.Vulnerability.objects.all(),
+        required=True,
+    )
+
     class Meta:
         model = models.VulnerabilityAssignment
         fields = ["asset_object_type", "asset_id", "vulnerability"]
+        widgets = {
+            'asset_object_type': forms.HiddenInput(),
+            'asset_id': forms.HiddenInput(),
+        }
 
 
 class VulnerabilityAssignmentFilterForm(NetBoxModelFilterSetForm):

@@ -8,6 +8,9 @@ from . import models
 
 
 class ThreatSourceTable(NetBoxTable):
+    
+    name = tables.Column(linkify=True)
+
     class Meta(NetBoxTable.Meta):
         model = models.ThreatSource
         fields = ["name", "threat_type", "capability", "intent", "targeting"]
@@ -17,6 +20,9 @@ class ThreatSourceTable(NetBoxTable):
 
 
 class ThreatEventTable(NetBoxTable):
+    
+    name = tables.Column(linkify=True)
+
     class Meta(NetBoxTable.Meta):
         model = models.ThreatEvent
         fields = ["name", "threat_source", "relevance", "likelihood", "impact"]
@@ -26,6 +32,9 @@ class ThreatEventTable(NetBoxTable):
 
 
 class VulnerabilityTable(NetBoxTable):
+
+    name = tables.Column(linkify=True)
+    
     class Meta(NetBoxTable.Meta):
         model = models.Vulnerability
         fields = ["name", "cve", "description", "asset"]
@@ -36,8 +45,20 @@ class VulnerabilityTable(NetBoxTable):
 
 class VulnerabilityAssignmentTable(NetBoxTable):
 
-    actions = columns.ActionsColumn(actions=())
+    actions = columns.ActionsColumn(actions=('delete',))
 
     class Meta(NetBoxTable.Meta):
         model = models.VulnerabilityAssignment
         fields = ["vulnerability", "vulnerability__cve", "vulnerability__description"]
+
+class VulnerabilityAssignmentListTable(NetBoxTable):
+
+    actions = columns.ActionsColumn(actions=('delete',))
+
+    asset = tables.Column(linkify=True)
+
+    asset_object_type = tables.Column(verbose_name="Asset Type")
+
+    class Meta(NetBoxTable.Meta):
+        model = models.VulnerabilityAssignment
+        fields = ["asset", "asset_object_type"]

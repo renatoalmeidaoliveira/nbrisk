@@ -23,6 +23,7 @@ urlpatterns  = (
     path('threat-event/<int:pk>/', views.ThreatEventView.as_view(), name='threatevent'),
     path('threat-event/<int:pk>/edit/', views.ThreatEventEditView.as_view(), name='threatevent_edit'),
     path('threat-event/<int:pk>/delete/', views.ThreatEventDeleteView.as_view(), name='threatevent_delete'),
+    path('threat-event/delete/', views.ThreatEventBulkDeleteView.as_view(), name='threatevent_bulk_delete'),
     path('threat-event/<int:pk>/changelog/', ObjectChangeLogView.as_view(), name='threatevent_changelog', kwargs={
         'model': models.ThreatEvent
     }),
@@ -34,9 +35,15 @@ urlpatterns  = (
     path('vulnerability/<int:pk>/', views.VulnerabilityView.as_view(), name='vulnerability'),
     path('vulnerability/<int:pk>/edit/', views.VulnerabilityEditView.as_view(), name='vulnerability_edit'),
     path('vulnerability/<int:pk>/delete/', views.VulnerabilityDeleteView.as_view(), name='vulnerability_delete'),
+    path('vulnerability/delete/', views.VulnerabilityBulkDeleteView.as_view(), name='vulnerability_bulk_delete'),
     path('vulnerability/<int:pk>/changelog/', ObjectChangeLogView.as_view(), name='vulnerability_changelog', kwargs={
         'model': models.Vulnerability
     }),
+    path('vulnerability/<int:pk>/affected-assets/', views.VulnerabilityAffectedAssetsView.as_view(), name='vulnerability_affected_assets'),
+
+    # VulnerabilityAssignment URLs
+    path('vulnerability-assignments/add/', views.VulnerabilityAssignmentEditView.as_view(), name='vulnerabilityassignment_add'),
+    path('vulnerability-assignments/<int:pk>/delete/', views.VulnerabilityAssignmentDeleteView.as_view(), name='vulnerabilityassignment_delete'),
 
     
 )
