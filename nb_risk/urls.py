@@ -1,5 +1,5 @@
 from django.urls import path
-from netbox.views.generic import ObjectChangeLogView
+from netbox.views.generic import ObjectChangeLogView, ObjectJournalView
 
 from . import models, views
 
@@ -21,6 +21,7 @@ urlpatterns  = (
     path('threat-event/', views.ThreatEventListView.as_view(), name='threatevent_list'),
     path('threat-event/add/', views.ThreatEventEditView.as_view(), name='threatevent_add'),
     path('threat-event/<int:pk>/', views.ThreatEventView.as_view(), name='threatevent'),
+    path('threat-event/<int:pk>/vulnerabilities/', views.ThreatEventVulnerabilityView.as_view(), name='threatevent_vulnerabilities'),
     path('threat-event/<int:pk>/edit/', views.ThreatEventEditView.as_view(), name='threatevent_edit'),
     path('threat-event/<int:pk>/delete/', views.ThreatEventDeleteView.as_view(), name='threatevent_delete'),
     path('threat-event/delete/', views.ThreatEventBulkDeleteView.as_view(), name='threatevent_bulk_delete'),
@@ -44,6 +45,21 @@ urlpatterns  = (
     # VulnerabilityAssignment URLs
     path('vulnerability-assignments/add/', views.VulnerabilityAssignmentEditView.as_view(), name='vulnerabilityassignment_add'),
     path('vulnerability-assignments/<int:pk>/delete/', views.VulnerabilityAssignmentDeleteView.as_view(), name='vulnerabilityassignment_delete'),
+
+    # Risk URLs
+    path('risk/', views.RiskListView.as_view(), name='risk_list'),
+    path('risk/add/', views.RiskEditView.as_view(), name='risk_add'),
+    path('risk/<int:pk>/', views.RiskView.as_view(), name='risk'),
+    path('risk/<int:pk>/edit/', views.RiskEditView.as_view(), name='risk_edit'),
+    path('risk/<int:pk>/delete/', views.RiskDeleteView.as_view(), name='risk_delete'),
+    path('risk/delete/', views.RiskBulkDeleteView.as_view(), name='risk_bulk_delete'),
+    path('risk/<int:pk>/changelog/', ObjectChangeLogView.as_view(), name='risk_changelog', kwargs={
+        'model': models.Risk
+    }),
+    path('risk/<int:pk>/journal/', ObjectJournalView.as_view(), name='risk_journal', kwargs={
+        'model': models.Risk
+    }),
+
 
     
 )

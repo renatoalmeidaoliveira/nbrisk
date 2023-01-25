@@ -35,3 +35,10 @@ class VulnerabilityAssignmentFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = models.VulnerabilityAssignment
         fields = ["vulnerability"]
+
+# Risk Filters
+
+class RiskFilterSet(NetBoxModelFilterSet):
+    class Meta:
+        model = models.Risk
+        fields = ["name", "threat_event", "description", "impact", "likelihood"]

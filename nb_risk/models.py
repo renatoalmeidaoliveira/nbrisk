@@ -110,6 +110,8 @@ class ThreatEvent(NetBoxModel):
         on_delete=models.PROTECT,
         related_name="threat_events",
         verbose_name="Threat Source",
+        blank=True,
+        null=True,
     )
     description = models.CharField("Description", max_length=100, blank=True)
     notes = models.TextField("Notes", blank=True)
@@ -125,12 +127,8 @@ class ThreatEvent(NetBoxModel):
         choices=choices.LikelihoodChoices,
         default=choices.LikelihoodChoices.LIKELIHOOD_1,
     )
-    impact = models.CharField(
-        "Impact",
-        max_length=100,
-        choices=choices.ImpactChoices,
-        default=choices.ImpactChoices.IMPACT_1,
-    )
+    impact = models.CharField("Impact", max_length=100, unique=True)
+    
     vulnerability = models.ManyToManyField(
         to=VulnerabilityAssignment,
         related_name="threat_events",
@@ -145,3 +143,73 @@ class ThreatEvent(NetBoxModel):
             "plugins:nb_risk:threatevent", args=[self.pk]
         )
 
+# Risk Model
+
+class Risk(NetBoxModel):
+
+    name = models.CharField("Name", max_length=100, unique=True)
+    notes = models.TextField("Notes", blank=True)
+    threat_event = models.ForeignKey(
+        to=ThreatEvent,
+        on_delete=models.PROTECT,
+        related_name="risks",
+        verbose_name="Threat Event",
+    )
+    description = models.CharField("Description", max_length=100, blank=True)
+    likelihood = models.CharField(
+        "Likelihood",
+        max_length=100,
+        choices=choices.LikelihoodChoices,
+        default=choices.LikelihoodChoices.LIKELIHOOD_1,
+    )
+    impact = models.CharField(
+        "Level of Impact",
+        max_length=100,
+        choices=choices.ImpactChoices,
+        default=choices.ImpactChoices.IMPACT_1,
+    )
+
+    @property
+    def risk_level(self):
+        if self.impact == choices.ImpactChoices.IMPACT_5:
+            return choices.RiskLevelChoices.RISK_LEVEL_5
+        elif self.impact == choices.ImpactChoices.IMPACT_4:
+            if self.likelihood == choices.LikelihoodChoices.LIKELIHOOD_5:
+                return choices.RiskLevelChoices.RISK_LEVEL_5
+            else:
+                return choices.RiskLevelChoices.RISK_LEVEL_4
+        elif self.impact == choices.ImpactChoices.IMPACT_3:
+            if self.likelihood == choices.LikelihoodChoices.LIKELIHOOD_5:
+                return choices.RiskLevelChoices.RISK_LEVEL_5
+            elif self.likelihood == choices.LikelihoodChoices.LIKELIHOOD_4:
+                return choices.RiskLevelChoices.RISK_LEVEL_4
+            else:
+                return choices.RiskLevelChoices.RISK_LEVEL_3
+        elif self.impact == choices.ImpactChoices.IMPACT_2:
+            if self.likelihood == choices.LikelihoodChoices.LIKELIHOOD_5:
+                return choices.RiskLevelChoices.RISK_LEVEL_4
+            elif self.likelihood == choices.LikelihoodChoices.LIKELIHOOD_4:
+                return choices.RiskLevelChoices.RISK_LEVEL_4
+            elif self.likelihood == choices.LikelihoodChoices.LIKELIHOOD_3:
+                return choices.RiskLevelChoices.RISK_LEVEL_3
+            else:
+                return choices.RiskLevelChoices.RISK_LEVEL_2
+        elif self.impact == choices.ImpactChoices.IMPACT_1:
+            if self.likelihood == choices.LikelihoodChoices.LIKELIHOOD_5:
+                return choices.RiskLevelChoices.RISK_LEVEL_4
+            elif self.likelihood == choices.LikelihoodChoices.LIKELIHOOD_4:
+                return choices.RiskLevelChoices.RISK_LEVEL_3
+            elif self.likelihood == choices.LikelihoodChoices.LIKELIHOOD_3:
+                return choices.RiskLevelChoices.RISK_LEVEL_2
+            elif self.likelihood == choices.LikelihoodChoices.LIKELIHOOD_2:
+                return choices.RiskLevelChoices.RISK_LEVEL_1
+            else:
+                return choices.RiskLevelChoices.RISK_LEVEL_1
+                
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse(
+            "plugins:nb_risk:risk", args=[self.pk]
+        )

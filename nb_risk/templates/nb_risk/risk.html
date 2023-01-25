@@ -1,19 +1,13 @@
 {% extends 'generic/object.html' %}
 {% load render_table from django_tables2 %}
 
-{% block extra_tabs %}
-<li role="presentation" class="nav-item">
-  <a href="{% url 'plugins:nb_risk:threatevent_vulnerabilities' pk=object.pk %}" class="nav-link{% if tab == 'vulnerabilities' %} active{% endif %}">
-    Exploit Vulnerabilities
-  </a>
-</li>
-{% endblock %}
+
 
 {% block content %}
 <div class="row mb-3">
     <div class="col col-md-6">
         <div class="card">
-            <h5 class="card-header">Threat Event</h5>
+            <h5 class="card-header">Vulnerability</h5>
             <div class="card-body">
                 <table class="table table-hover attr-table">
                     <tr>
@@ -21,12 +15,14 @@
                         <td>{{ object.name }}</td>
                     </tr>
                     <tr>
-                        <th scope="row">Threat Source</th>
+                        <th scope="row">Description</th>
+                        <td>{{ object.description }}</td>
+                    </tr>
+                    <th scope="row">Threat Event</th>
                         <td>
-                            {% if object.threat_source %}
-                            {% if object.threat_source.get_absolute_url %}
-                                <a href="{{ object.threat_source.get_absolute_url }}">{{ object.threat_source }}</a>
-                            
+                            {% if object.threat_event %}
+                            {% if object.threat_event.get_absolute_url %}
+                                <a href="{{ object.threat_event.get_absolute_url }}">{{ object.threat_event }}</a>                            
                             {% endif %}
                             {% else %}
                                 ---
@@ -34,16 +30,16 @@
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row">Relevance</th>
-                        <td>{{ object.relevance }}</td>
-                    </tr>
-                    <tr>
                         <th scope="row">Likelihood</th>
                         <td>{{ object.likelihood }}</td>
                     </tr>
                     <tr>
-                        <th scope="row">Impact</th>
+                        <th scope="row">Level of Impact</th>
                         <td>{{ object.impact }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Level of Risk</th>
+                        <td>{{ object.risk_level }}</td>
                     </tr>
                 </table>
             </div>

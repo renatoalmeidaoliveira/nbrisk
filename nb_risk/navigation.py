@@ -13,4 +13,8 @@ menu_items = (
         link="plugins:nb_risk:vulnerability_list",
         link_text="Vulnerabilities",
     ),
+    PluginMenuItem(
+        link="plugins:nb_risk:risk_list",
+        link_text="Risks",
+    ),
 )

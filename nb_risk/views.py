@@ -42,6 +42,18 @@ class ThreatSourceDeleteView(generic.ObjectDeleteView):
 class ThreatEventView(generic.ObjectView):
     queryset = models.ThreatEvent.objects.all()
 
+class ThreatEventVulnerabilityView(generic.ObjectView):
+    queryset = models.ThreatEvent.objects.all()
+    template_name = "nb_risk/threatevent_vulnerabilities.html"
+
+    def get_extra_context(self, request, instance):
+        vulnerabilities = instance.vulnerability.all()
+        table = tables.VulnerabilityExploitListTable(vulnerabilities)
+        data = {
+            "tab" : "vulnerabilities",
+            "table": table,
+        }
+        return data
 
 class ThreatEventListView(generic.ObjectListView):
     queryset = models.ThreatEvent.objects.all()
@@ -174,3 +186,26 @@ class VulnerabilityAssignmentEditView(generic.ObjectEditView):
 
 class VulnerabilityAssignmentDeleteView(generic.ObjectDeleteView):
     queryset = models.VulnerabilityAssignment.objects.all()
+
+
+# Risk Views
+
+class RiskListView(generic.ObjectListView):
+    queryset = models.Risk.objects.all()
+    table = tables.RiskTable
+    filterset = filters.RiskFilterSet
+    filterset_form = forms.RiskFilterForm
+
+class RiskView(generic.ObjectView):
+    queryset = models.Risk.objects.all()
+
+class RiskEditView(generic.ObjectEditView):
+    queryset = models.Risk.objects.all()
+    form = forms.RiskForm
+
+class RiskDeleteView(generic.ObjectDeleteView):
+    queryset = models.Risk.objects.all()
+
+class RiskBulkDeleteView(generic.BulkDeleteView):
+    queryset = models.Risk.objects.all()
+    table = tables.RiskTable

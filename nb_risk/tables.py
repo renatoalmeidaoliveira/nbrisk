@@ -62,3 +62,30 @@ class VulnerabilityAssignmentListTable(NetBoxTable):
     class Meta(NetBoxTable.Meta):
         model = models.VulnerabilityAssignment
         fields = ["asset", "asset_object_type"]
+
+class VulnerabilityExploitListTable(NetBoxTable):
+
+    actions = columns.ActionsColumn(actions=('delete',))
+
+    asset = tables.Column(linkify=True)
+
+    vulnerability = tables.Column(linkify=True)
+
+    asset_object_type = tables.Column(verbose_name="Asset Type")
+
+    class Meta(NetBoxTable.Meta):
+        model = models.VulnerabilityAssignment
+        fields = ["asset", "vulnerability", "asset_object_type"] 
+
+
+# Risk Tables
+
+class RiskTable(NetBoxTable):
+
+    name = tables.Column(linkify=True)
+
+    risk_level = tables.Column(verbose_name="Risk Level")
+
+    class Meta(NetBoxTable.Meta):
+        model = models.Risk
+        fields = ["name", "threat_event", "likelihood", "impact", "risk_level"]

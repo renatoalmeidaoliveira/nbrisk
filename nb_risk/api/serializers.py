@@ -41,7 +41,7 @@ class ThreatEventSerializer(NetBoxModelSerializer):
     threat_source = serializers.SlugRelatedField(slug_field="name", queryset=models.ThreatSource.objects.all())
     relevance = ChoiceField(choices=choices.RelevanceChoices)
     likelihood = ChoiceField(choices=choices.LikelihoodChoices)
-    impact = ChoiceField(choices=choices.ImpactChoices)
+
 
     def get_display(self, obj):
         return obj.name
@@ -117,4 +117,29 @@ class VulnerabilityAssignmentSerializer(NetBoxModelSerializer):
             "asset_object_id",
             "asset",
             "vulnerability",
+        ]
+
+# Risk Serializers
+
+class RiskSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:risk-detail")
+    display = serializers.SerializerMethodField('get_display')
+    
+    threat_event = serializers.SlugRelatedField(slug_field="name", queryset=models.ThreatEvent.objects.all())
+
+   
+    def get_display(self, obj):
+        return obj.name
+
+    class Meta:
+        model = models.Risk
+        fields = [
+            "id",
+            "url",
+            "display",
+            "threat_event",
+            "description",
+            "likelihood",
+            "impact",
+            "notes",
         ]

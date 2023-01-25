@@ -119,3 +119,17 @@ class VulnerabilityAssignmentFilterForm(NetBoxModelFilterSetForm):
 
     class Meta:
         fields = ["vulnerability"]
+
+# Risk Forms
+
+class RiskForm(NetBoxModelForm):
+    class Meta:
+        model = models.Risk
+        fields = ["name", "threat_event", "description", "notes", "likelihood", "impact"]
+
+
+class RiskFilterForm(NetBoxModelFilterSetForm):
+    model = models.Risk
+
+    class Meta:
+        fields = ["name", "threat_event", "description", "impact", "likelihood"]

@@ -1,2 +1,51 @@
 {% extends 'generic/object.html' %}
 {% load render_table from django_tables2 %}
+
+
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">Threat Event</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">Name</th>
+                        <td>{{ object.name }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Description</th>
+                        <td>{{ object.description }}</td>
+                    <tr>
+                        <th scope="row">Threat Type</th>
+                        <td>{{ object.threat_type }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Capability</th>
+                        <td>{{ object.capability }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Intent</th>
+                        <td>{{ object.intent }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Target</th>
+                        <td>{{ object.targeting }}</td>
+                    </tr>
+
+                </table>
+            </div>
+        </div>
+        {% include 'inc/panels/tags.html' %}
+    </div>
+    <div class="col col-md-6">        
+        <div class="card">
+          <h5 class="card-header">Notes</h5>
+          <div class="card-body">
+            {{ object.notes | markdown  }}
+          </div>
+        </div>
+      </div>
+</div>
+{% endblock %}

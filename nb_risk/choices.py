@@ -103,3 +103,21 @@ AssetTypes = Q(
     Q(app_label="dcim", model="device")
     | Q(app_label="virtualization", model="virtualmachine")
 )
+
+# Define Level of Risk Choices
+
+class RiskLevelChoices(ChoiceSet):
+
+    RISK_LEVEL_1 = "Very High"
+    RISK_LEVEL_2 = "High"
+    RISK_LEVEL_3 = "Moderate"
+    RISK_LEVEL_4 = "Low"
+    RISK_LEVEL_5 = "Very Low"
+
+    CHOICES = (
+        (RISK_LEVEL_1, "Very High"),
+        (RISK_LEVEL_2, "High"),
+        (RISK_LEVEL_3, "Moderate"),
+        (RISK_LEVEL_4, "Low"),
+        (RISK_LEVEL_5, "Very Low"),
+    )

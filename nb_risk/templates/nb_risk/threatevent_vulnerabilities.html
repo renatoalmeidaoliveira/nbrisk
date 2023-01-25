@@ -3,8 +3,8 @@
 
 {% block extra_tabs %}
 <li role="presentation" class="nav-item">
-  <a href="{% url 'plugins:nb_risk:vulnerability_affected_assets' pk=object.pk %}" class="nav-link{% if tab == 'affected_assets' %} active{% endif %}">
-    Affected Assets
+  <a href="{% url 'plugins:nb_risk:threatevent_vulnerabilities' pk=object.pk %}" class="nav-link{% if tab == 'vulnerabilities' %} active{% endif %}">
+    Exploit Vulnerabilities
   </a>
 </li>
 {% endblock %}

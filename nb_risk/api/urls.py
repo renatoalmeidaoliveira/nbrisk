@@ -9,6 +9,7 @@ router.register('threatsource', views.ThreatSourceViewSet)
 router.register('threatevent', views.ThreatEventViewSet)
 router.register('vulnerability', views.VulnerabilityViewSet)
 router.register('vulnerabilityassignment', views.VulnerabilityAssignmentViewSet)
+router.register('risk', views.RiskViewSet)
 
 
 urlpatterns = router.urls
