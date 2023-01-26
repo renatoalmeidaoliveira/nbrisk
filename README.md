@@ -22,7 +22,11 @@ Once installed, the plugin needs to be enabled in your configuration.py
 PLUGINS = ["nb_risk"]
 ```
 
-First run source /opt/netbox/venv/bin/activate to enter the Python virtual environment.
+First run
+```
+source /opt/netbox/venv/bin/activate
+```
+to enter the Python virtual environment.
 
 Then run
 ```
