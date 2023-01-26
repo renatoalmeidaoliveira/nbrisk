@@ -1,4 +1,4 @@
-# Netbox Nbrisk
+7# Netbox Nbrisk
 [Netbox](https://github.com/netbox-community/netbox) Plugin inspired in NIST 800-30 Risk Management  **BETA VERSION**
 
 
@@ -27,6 +27,7 @@ First run source /opt/netbox/venv/bin/activate to enter the Python virtual envir
 Then run
 ```
 cd /opt/netbox/netbox
+pip install NbRisk
 python3 manage.py migrate nb_risk
 ```
 Not ready
