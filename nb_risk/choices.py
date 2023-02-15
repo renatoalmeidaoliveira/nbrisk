@@ -121,3 +121,17 @@ class RiskLevelChoices(ChoiceSet):
         (RISK_LEVEL_4, "Low"),
         (RISK_LEVEL_5, "Very Low"),
     )
+
+# Define CVE part choices
+
+class CVE_PART_CHOICES(ChoiceSet):
+            
+        PART_1 = "a"
+        PART_2 = "o"
+        PART_3 = "h"
+    
+        CHOICES = (
+            (PART_1, "Applications"),
+            (PART_2, "Operating Systems"),
+            (PART_3, "Hardware Devices"),
+        )

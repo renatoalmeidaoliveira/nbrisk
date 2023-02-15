@@ -1,7 +1,7 @@
 from django import forms
 
 from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
-from dcim.models import Device
+from dcim.models import Device, DeviceType
 from virtualization.models import VirtualMachine
 
 from utilities.forms import (
@@ -94,6 +94,22 @@ class VulnerabilityFilterForm(NetBoxModelFilterSetForm):
     class Meta:
         fields = ["name", "cve"]
 
+class VulnerabilitySearchFilterForm(NetBoxModelFilterSetForm):
+    model = models.Vulnerability
+    q = forms.CharField(label="cpeName", required=False)
+
+    device_type = DynamicModelChoiceField(
+        queryset=DeviceType.objects.all(),
+        required=False,
+    )
+    version = forms.CharField(
+        required=False
+    )
+
+    part = forms.ChoiceField(
+        choices=choices.CVE_PART_CHOICES,
+        required=False,
+    )
 
 # VulnerabilityAssignment Forms
 

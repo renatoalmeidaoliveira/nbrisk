@@ -1,7 +1,7 @@
 from django.urls import path
 from netbox.views.generic import ObjectChangeLogView, ObjectJournalView
 
-from . import models, views
+from . import models, views, cve
 
 urlpatterns  = (
 
@@ -41,7 +41,7 @@ urlpatterns  = (
         'model': models.Vulnerability
     }),
     path('vulnerability/<int:pk>/affected-assets/', views.VulnerabilityAffectedAssetsView.as_view(), name='vulnerability_affected_assets'),
-
+    path('vulnerability/search/', cve.VulnerabilitySearchView.as_view(), name='vulnerability_search'),
     # VulnerabilityAssignment URLs
     path('vulnerability-assignments/add/', views.VulnerabilityAssignmentEditView.as_view(), name='vulnerabilityassignment_add'),
     path('vulnerability-assignments/<int:pk>/delete/', views.VulnerabilityAssignmentDeleteView.as_view(), name='vulnerabilityassignment_delete'),

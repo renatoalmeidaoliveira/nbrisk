@@ -3,6 +3,7 @@ import django_tables2 as tables
 from netbox.tables import NetBoxTable, ChoiceFieldColumn, columns
 
 from . import models
+from . import columns as riskColumns
 
 # ThreatSource Tables
 
@@ -89,3 +90,20 @@ class RiskTable(NetBoxTable):
     class Meta(NetBoxTable.Meta):
         model = models.Risk
         fields = ["name", "threat_event", "likelihood", "impact", "risk_level"]
+
+# CVE Tables
+
+class CveTable(tables.Table):
+
+    id = tables.Column(attrs={'td': {'class': 'text-end text-nowrap'}})
+    description = tables.Column()
+
+    create = riskColumns.CreateColumn(empty_values=())
+
+    
+    class Meta:
+        attrs = {
+            'class': 'table table-hover object-list',
+        }
+
+    
