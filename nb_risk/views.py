@@ -100,6 +100,7 @@ class VulnerabilityListView(generic.ObjectListView):
     table = tables.VulnerabilityTable
     filterset = filters.VulnerabilityFilterSet
     filterset_form = forms.VulnerabilityFilterForm
+    template_name = "nb_risk/vulnerability_list.html"
 
 
 class VulnerabilityEditView(generic.ObjectEditView):
