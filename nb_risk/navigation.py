@@ -16,7 +16,7 @@ menu = PluginMenu(
                         PluginMenuButton(
                             "plugins:nb_risk:threatsource_add",
                             "Add",
-                            "mdi mdi-plus-thick",                            
+                            "mdi mdi-plus-thick",
                             ButtonColorChoices.GREEN,
                             permissions=["nb_risk.add_threatsource"],
                         ),

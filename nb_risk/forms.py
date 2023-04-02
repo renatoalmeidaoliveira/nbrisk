@@ -66,8 +66,6 @@ class ThreatEventForm(NetBoxModelForm):
 class ThreatEventFilterForm(NetBoxModelFilterSetForm):
     model = models.ThreatEvent
 
-
-
     class Meta:
         fields = [
             "name",
@@ -85,7 +83,19 @@ class ThreatEventFilterForm(NetBoxModelFilterSetForm):
 class VulnerabilityForm(NetBoxModelForm):
     class Meta:
         model = models.Vulnerability
-        fields = ["name", "cve", "description", "notes"]
+        fields = [
+            "name",
+            "cve",
+            "description",
+            "notes",
+            "cvssaccessVector",
+            "cvssaccessComplexity",
+            "cvssauthentication",
+            "cvssconfidentialityImpact",
+            "cvssintegrityImpact",
+            "cvssavailabilityImpact",
+            "cvssbaseScore",
+        ]
 
 
 class VulnerabilityFilterForm(NetBoxModelFilterSetForm):
@@ -93,6 +103,7 @@ class VulnerabilityFilterForm(NetBoxModelFilterSetForm):
 
     class Meta:
         fields = ["name", "cve"]
+
 
 class VulnerabilitySearchFilterForm(NetBoxModelFilterSetForm):
     model = models.Vulnerability
@@ -102,14 +113,13 @@ class VulnerabilitySearchFilterForm(NetBoxModelFilterSetForm):
         queryset=DeviceType.objects.all(),
         required=False,
     )
-    version = forms.CharField(
-        required=False
-    )
+    version = forms.CharField(required=False)
 
     part = forms.ChoiceField(
         choices=choices.CVE_PART_CHOICES,
         required=False,
     )
+
 
 # VulnerabilityAssignment Forms
 
@@ -125,8 +135,8 @@ class VulnerabilityAssignmentForm(BootstrapMixin, forms.ModelForm):
         model = models.VulnerabilityAssignment
         fields = ["asset_object_type", "asset_id", "vulnerability"]
         widgets = {
-            'asset_object_type': forms.HiddenInput(),
-            'asset_id': forms.HiddenInput(),
+            "asset_object_type": forms.HiddenInput(),
+            "asset_id": forms.HiddenInput(),
         }
 
 
@@ -136,12 +146,21 @@ class VulnerabilityAssignmentFilterForm(NetBoxModelFilterSetForm):
     class Meta:
         fields = ["vulnerability"]
 
+
 # Risk Forms
+
 
 class RiskForm(NetBoxModelForm):
     class Meta:
         model = models.Risk
-        fields = ["name", "threat_event", "description", "notes", "likelihood", "impact"]
+        fields = [
+            "name",
+            "threat_event",
+            "description",
+            "notes",
+            "likelihood",
+            "impact",
+        ]
 
 
 class RiskFilterForm(NetBoxModelFilterSetForm):

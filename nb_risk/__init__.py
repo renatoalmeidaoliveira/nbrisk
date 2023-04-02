@@ -11,7 +11,15 @@ class NbriskConfig(PluginConfig):
     author = "Renato Almdida Oliveira"
     author_email = "renato.almeida.oliveira@gmail.com"
     required_settings = []
-    default_settings = {}
+    default_settings = {
+        "supported_assets": [
+            "dcim.device",
+            "virtualization.virtualmachine",
+            "tenancy.tenant",
+            "dcim.site",
+        ],
+        "additional_assets": [],
+    }
 
 
 config = NbriskConfig  # noqa

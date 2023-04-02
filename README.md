@@ -34,11 +34,31 @@ cd /opt/netbox/netbox
 pip install NbRisk
 python3 manage.py migrate nb_risk
 ```
-Not ready
+
 
 ## Configuration
 
-None
+To assign vulnerabilities to a specific model in NB Risk, you can add the following code to the `PLUGINS_CONFIG` section of your `netbox/configuration.py` file, using the `additional_assets` parameter:
+```python
+PLUGINS_CONFIG = {
+    'nb_risk': {
+        'additional_assets': [
+            'app_label.model_name',
+        ],
+    },
+}
+```
+Replace `app_label` and `model_name` based in the model you want to add. For example, if you want to assign vulnerabilities to the platform model in the dcim app, you would use 'dcim.platform' as shown in the example below:
+```python
+PLUGINS_CONFIG = {
+    'nb_risk': {
+        'additional_assets': [
+            'dcim.platform',
+        ],
+    },
+}
+```
+Note that you can specify multiple models by adding them to the `additional_assets` list.
 
 ## Screenshots
 

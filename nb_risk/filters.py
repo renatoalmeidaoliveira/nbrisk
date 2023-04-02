@@ -1,4 +1,6 @@
 from netbox.filtersets import NetBoxModelFilterSet
+from django.db.models import Q
+import django_filters
 from . import models
 
 # ThreatSource Filters
@@ -23,9 +25,20 @@ class ThreatEventFilterSet(NetBoxModelFilterSet):
 
 
 class VulnerabilityFilterSet(NetBoxModelFilterSet):
+
     class Meta:
         model = models.Vulnerability
-        fields = ["name", "cve"]
+        fields = ("name", "cve",)
+
+    def search(self, queryset, name, value):
+        if not value.strip():
+            return queryset
+        qs_filter = (
+            Q(name__icontains=value)
+            | Q(cve__icontains=value)
+            | Q(cvssaccessVector__icontains=value)
+        )
+        return queryset.filter(qs_filter)
 
 
 # VulnerabilityAssignment Filters
@@ -36,7 +49,9 @@ class VulnerabilityAssignmentFilterSet(NetBoxModelFilterSet):
         model = models.VulnerabilityAssignment
         fields = ["vulnerability"]
 
+
 # Risk Filters
+
 
 class RiskFilterSet(NetBoxModelFilterSet):
     class Meta:

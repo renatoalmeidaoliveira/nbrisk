@@ -33,10 +33,10 @@ class VulnerabilitySearchView(ObjectPermissionRequiredMixin, View):
 
     def get(self, request, **kwargs):
 
-        cves = get_cves(request)       
-        
+        cves = get_cves(request)
+        print(cves)
         table = tables.CveTable(cves)
-        
+
         return render(
             request,
             self.template_name,
@@ -50,10 +50,10 @@ class VulnerabilitySearchView(ObjectPermissionRequiredMixin, View):
 
 
 def get_cves(request):
-    if request.GET.get('q') is not None:
-        query = request.GET.get('q')
-    elif request.GET.get('device_type') is not None:
-        device_type_id = request.GET.get('device_type')
+    if request.GET.get("q") is not None:
+        query = request.GET.get("q")
+    elif request.GET.get("device_type") is not None:
+        device_type_id = request.GET.get("device_type")
         device_type = DeviceType.objects.get(id=device_type_id)
         manufactor = device_type.manufacturer.name
         product = device_type.model
@@ -69,7 +69,6 @@ def get_cves(request):
         return []
 
     payload = {"cpeName": f"{query}"}
-    print(query)
     try:
         r = requests.get(
             "https://services.nvd.nist.gov/rest/json/cves/2.0/", params=payload
@@ -82,7 +81,18 @@ def get_cves(request):
                 if description["lang"] == "en":
                     cve["description"] = description["value"]
                     break
+            for metric in entry["cve"]["metrics"]:
+                if metric == "cvssMetricV2":
+                    metrics = entry["cve"]["metrics"][metric][0]["cvssData"]
+                    cve["accessVector"] = metrics["accessVector"]
+                    cve["accessComplexity"] = metrics["accessComplexity"]
+                    cve["authentication"] = metrics["authentication"]
+                    cve["confidentialityImpact"] = metrics["confidentialityImpact"]
+                    cve["integrityImpact"] = metrics["integrityImpact"]
+                    cve["availabilityImpact"] = metrics["availabilityImpact"]
+                    cve["baseScore"] = metrics["baseScore"]
             output.append(cve)
         return output
     except Exception as e:
+        print(e)
         return []

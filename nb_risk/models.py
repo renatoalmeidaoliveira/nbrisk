@@ -33,9 +33,7 @@ class ThreatSource(NetBoxModel):
         return self.name
 
     def get_absolute_url(self):
-        return reverse(
-            "plugins:nb_risk:threatsource", args=[self.pk]
-        )
+        return reverse("plugins:nb_risk:threatsource", args=[self.pk])
 
 
 # Vulnerability Model
@@ -47,17 +45,39 @@ class Vulnerability(NetBoxModel):
     cve = models.CharField("CVE", max_length=100, blank=True)
     description = models.CharField("Description", max_length=100, blank=True)
     notes = models.TextField("Notes", blank=True)
+    cvssaccessVector = models.CharField(
+        "CVSS Access Vector", max_length=100, blank=True
+    )
+    cvssaccessComplexity = models.CharField(
+        "CVSS Access Complexity", max_length=100, blank=True
+    )
+    cvssauthentication = models.CharField(
+        "CVSS Authentication", max_length=100, blank=True
+    )
+    cvssconfidentialityImpact = models.CharField(
+        "CVSS Confidentiality Impact", max_length=100, blank=True
+    )
+    cvssintegrityImpact = models.CharField(
+        "CVSS Integrity Impact", max_length=100, blank=True
+    )
+    cvssavailabilityImpact = models.CharField(
+        "CVSS Availability Impact", max_length=100, blank=True
+    )
+    cvssbaseScore = models.FloatField("CVSS Base Score", max_length=100, blank=True)
+
+    @property
+    def affected_assets(self):
+        return self.vulnerability_assignments.count()
 
     def __str__(self):
         return self.name
-    
+
     def get_absolute_url(self):
-        return reverse(
-            "plugins:nb_risk:vulnerability", args=[self.pk]
-        )
+        return reverse("plugins:nb_risk:vulnerability", args=[self.pk])
 
     class Meta:
         verbose_name_plural = "Vulnerabilities"
+
 
 # VulnearbilityAssingment Model
 
@@ -93,8 +113,8 @@ class VulnerabilityAssignment(NetBoxModel):
     class Meta:
         constraints = (
             models.UniqueConstraint(
-                fields=('asset_object_type', 'asset_id', 'vulnerability'),
-                name='%(app_label)s_%(class)s_unique_object_vulnerability'
+                fields=("asset_object_type", "asset_id", "vulnerability"),
+                name="%(app_label)s_%(class)s_unique_object_vulnerability",
             ),
         )
 
@@ -128,7 +148,7 @@ class ThreatEvent(NetBoxModel):
         default=choices.LikelihoodChoices.LIKELIHOOD_1,
     )
     impact = models.CharField("Impact", max_length=100, unique=True)
-    
+
     vulnerability = models.ManyToManyField(
         to=VulnerabilityAssignment,
         related_name="threat_events",
@@ -139,11 +159,11 @@ class ThreatEvent(NetBoxModel):
         return self.name
 
     def get_absolute_url(self):
-        return reverse(
-            "plugins:nb_risk:threatevent", args=[self.pk]
-        )
+        return reverse("plugins:nb_risk:threatevent", args=[self.pk])
+
 
 # Risk Model
+
 
 class Risk(NetBoxModel):
 
@@ -205,11 +225,9 @@ class Risk(NetBoxModel):
                 return choices.RiskLevelChoices.RISK_LEVEL_1
             else:
                 return choices.RiskLevelChoices.RISK_LEVEL_1
-                
+
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
-        return reverse(
-            "plugins:nb_risk:risk", args=[self.pk]
-        )
+        return reverse("plugins:nb_risk:risk", args=[self.pk])
