@@ -32,3 +32,9 @@ class VulnerabilityAssignmentViewSet(NetBoxModelViewSet):
 class RiskViewSet(NetBoxModelViewSet):
     queryset = models.Risk.objects.all()
     serializer_class = serializers.RiskSerializer
+
+# Control ViewSets
+
+class ControlViewSet(NetBoxModelViewSet):
+    queryset = models.Control.objects.all()
+    serializer_class = serializers.ControlSerializer

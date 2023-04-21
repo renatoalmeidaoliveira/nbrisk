@@ -1,0 +1,23 @@
+{% extends 'generic/object.html' %}
+{% load render_table from django_tables2 %}
+
+{% block extra_tabs %}
+<li role="presentation" class="nav-item">
+    <a href="{% url 'plugins:nb_risk:control_risks' pk=object.pk %}" class="nav-link{% if tab == 'risks' %} active{% endif %}">
+        Risks  {% if risks_count  %}<span class="badge bg-secondary">{{ risks_count }}</span>{% endif %}
+    </a>
+</li>
+<li role="presentation" class="nav-item">
+    <a href="{% url 'plugins:nb_risk:control_assets' pk=object.pk %}" class="nav-link{% if tab == 'assets' %} active{% endif %}">
+        Related Assets  {% if assets_count  %}<span class="badge bg-secondary">{{ assets_count }}</span>{% endif %}
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body" id="object_list">
+      {% include 'htmx/table.html' %}
+    </div>
+</div>
+{% endblock %}

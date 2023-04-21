@@ -57,3 +57,16 @@ class RiskFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = models.Risk
         fields = ["name", "threat_event", "description", "impact", "likelihood"]
+
+# Control Filters
+
+class ControlFilterSet(NetBoxModelFilterSet):
+    class Meta:
+        model = models.Control
+        fields = [
+            "name",
+            "description",
+            "notes",
+            "category",
+            "risk",
+        ]

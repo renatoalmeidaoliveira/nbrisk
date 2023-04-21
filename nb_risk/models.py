@@ -231,3 +231,29 @@ class Risk(NetBoxModel):
 
     def get_absolute_url(self):
         return reverse("plugins:nb_risk:risk", args=[self.pk])
+
+
+# Control Model
+
+class Control(NetBoxModel):
+
+    name = name = models.CharField("Name", max_length=100, unique=True)
+    description = models.CharField("Description", max_length=100, blank=True)
+    notes = models.TextField("Notes", blank=True)
+    category = models.CharField(
+        "Category",
+        max_length=100,
+        choices=choices.ControlCategoryChoices,
+        default=choices.ControlCategoryChoices.CATEGORY_1,
+    )
+    risk = models.ManyToManyField(
+        Risk,
+        verbose_name="Risks",
+        blank=True,
+    )
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse("plugins:nb_risk:control", args=[self.pk])

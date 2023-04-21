@@ -90,6 +90,8 @@ class RiskTable(NetBoxTable):
 
     name = tables.Column(linkify=True)
 
+    threat_event = tables.Column(linkify=True)
+
     risk_level = tables.Column(verbose_name="Risk Level")
 
     class Meta(NetBoxTable.Meta):
@@ -118,3 +120,11 @@ class CveTable(tables.Table):
         attrs = {
             "class": "table table-hover object-list",
         }
+
+# Control Tables
+
+class ControlTable(NetBoxTable):
+    name = tables.Column(linkify=True)
+    class Meta(NetBoxTable.Meta):
+        model = models.Control
+        fields = ["name",]

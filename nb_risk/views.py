@@ -239,3 +239,74 @@ class RiskDeleteView(generic.ObjectDeleteView):
 class RiskBulkDeleteView(generic.BulkDeleteView):
     queryset = models.Risk.objects.all()
     table = tables.RiskTable
+
+# Control Views
+
+class ControlListView(generic.ObjectListView):
+    queryset = models.Control.objects.all()
+    table = tables.ControlTable
+    filterset = filters.ControlFilterSet
+    filterset_form = forms.ControlFilterForm
+
+class ControlView(generic.ObjectView):
+    queryset = models.Control.objects.all()
+
+    def get_extra_context(self, request, instance):
+        risks = instance.risk.all()
+        thread_events = []
+        for risk in risks:
+            thread_events.append(risk.threat_event)
+        assets = models.VulnerabilityAssignment.objects.filter(threat_events__in=thread_events)
+        data = {
+            "risks_count": risks.count(),
+            "assets_count": assets.count(),
+        }
+        return data
+
+class ControlRisksView(generic.ObjectView):
+    queryset = models.Control.objects.all()
+    template_name = "nb_risk/control_risks.html"
+    
+    def get_extra_context(self, request, instance):
+        risks = instance.risk.all()
+        thread_events = []
+        for risk in risks:
+            thread_events.append(risk.threat_event)
+        assets = models.VulnerabilityAssignment.objects.filter(threat_events__in=thread_events)
+        table = tables.RiskTable(risks)
+        data = {
+            "tab": "risks",
+            "risks_count": risks.count(),
+            "assets_count": assets.count(),
+            "table": table,
+        }
+        return data
+
+class ControlAssetsView(generic.ObjectView):
+    queryset = models.Control.objects.all()
+    template_name = "nb_risk/control_assets.html"
+    
+    def get_extra_context(self, request, instance):
+        risks = instance.risk.all()
+        thread_events = []
+        for risk in risks:
+            thread_events.append(risk.threat_event)
+        assets = models.VulnerabilityAssignment.objects.filter(threat_events__in=thread_events)
+        table = tables.VulnerabilityAssignmentListTable(assets)
+        data = {
+            "tab": "assets",
+            "assets_count": assets.count(),
+            "table": table,
+        }
+        return data
+
+class ControlEditView(generic.ObjectEditView):
+    queryset = models.Control.objects.all()
+    form = forms.ControlForm
+
+class ControlDeleteView(generic.ObjectDeleteView):
+    queryset = models.Control.objects.all()
+
+class ControlBulkDeleteView(generic.BulkDeleteView):
+    queryset = models.Control.objects.all()
+    table = tables.ControlTable

@@ -141,4 +141,38 @@ urlpatterns = (
         name="risk_journal",
         kwargs={"model": models.Risk},
     ),
+    # Control URLs
+    path("control/", views.ControlListView.as_view(), name="control_list"),
+    path("control/add/", views.ControlEditView.as_view(), name="control_add"),
+    path("control/<int:pk>/", views.ControlView.as_view(), name="control"),
+    path("control/<int:pk>/edit/", views.ControlEditView.as_view(), name="control_edit"),
+    path(
+        "control/<int:pk>/delete/", views.ControlDeleteView.as_view(), name="control_delete"
+    ),
+    path(
+        "control/delete/", views.ControlBulkDeleteView.as_view(), name="control_bulk_delete"
+    ),
+    path(
+        "control/<int:pk>/changelog/",
+        ObjectChangeLogView.as_view(),
+        name="control_changelog",
+        kwargs={"model": models.Control},
+    ),
+    path(        
+        "control/<int:pk>/journal/",
+        ObjectJournalView.as_view(),
+        name="control_journal",
+        kwargs={"model": models.Control},
+    ),
+    path(
+        "control/<int:pk>/risks/",
+        views.ControlRisksView.as_view(),
+        name="control_risks",
+    ),
+    path(
+        "control/<int:pk>/assets/",
+        views.ControlAssetsView.as_view(),
+        name="control_assets",
+    ),
+    
 )

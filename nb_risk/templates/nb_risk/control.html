@@ -1,0 +1,57 @@
+{% extends 'generic/object.html' %}
+{% load render_table from django_tables2 %}
+
+{% block extra_tabs %}
+<li role="presentation" class="nav-item">
+    <a href="{% url 'plugins:nb_risk:control_risks' pk=object.pk %}" class="nav-link{% if tab == 'risks' %} active{% endif %}">
+        Risks  {% if risks_count  %}<span class="badge bg-secondary">{{ risks_count }}</span>{% endif %}
+    </a>
+</li>
+<li role="presentation" class="nav-item">
+    <a href="{% url 'plugins:nb_risk:control_assets' pk=object.pk %}" class="nav-link{% if tab == 'assets' %} active{% endif %}">
+        Related Assets  {% if assets_count  %}<span class="badge bg-secondary">{{ assets_count }}</span>{% endif %}
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">Control</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">Name</th>
+                        <td>{{ object.name }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Category</th>
+                        <td>{{ object.category }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">Notes</h5>
+            <div class="card-body">
+              {{ object.notes | markdown  }}
+            </div>
+        </div> 
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col col-md-6">
+        {% include 'inc/panels/comments.html' %}
+        {% include 'inc/panels/custom_fields.html' %}
+        {% include 'inc/panels/tags.html' %}
+    </div>
+           
+</div>
+
+
+
+
+{% endblock %}

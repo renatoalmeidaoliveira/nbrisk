@@ -168,3 +168,28 @@ class RiskFilterForm(NetBoxModelFilterSetForm):
 
     class Meta:
         fields = ["name", "threat_event", "description", "impact", "likelihood"]
+
+# Control Forms
+
+class ControlForm(NetBoxModelForm):
+    class Meta:
+        model = models.Control
+        fields = [
+            "name",
+            "description",
+            "notes",
+            "category",
+            "risk",
+        ]
+
+class ControlFilterForm(NetBoxModelFilterSetForm):
+    model = models.Control
+
+    class Meta:
+        fields = [
+            "name",
+            "description",
+            "notes",
+            "category",
+            "risk",
+        ]

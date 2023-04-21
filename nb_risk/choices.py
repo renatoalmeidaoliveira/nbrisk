@@ -138,3 +138,15 @@ class CVE_PART_CHOICES(ChoiceSet):
         (PART_2, "Operating Systems"),
         (PART_3, "Hardware Devices"),
     )
+
+# ControlCategoryChoices
+
+class ControlCategoryChoices(ChoiceSet):
+
+    CATEGORY_1 = "Preventive"
+    CATEGORY_2 = "Detective"
+
+    CHOICES = (
+        (CATEGORY_1, "Preventive"),
+        (CATEGORY_2, "Detective"),
+    )

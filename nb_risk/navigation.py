@@ -81,6 +81,20 @@ menu = PluginMenu(
                         ),
                     ),
                 ),
+                PluginMenuItem(
+                    permissions=["nb_risk.view_control"],
+                    link="plugins:nb_risk:control_list",
+                    link_text="Controls",
+                    buttons=(
+                        PluginMenuButton(
+                            "plugins:nb_risk:control_add",
+                            "Add",
+                            "mdi mdi-plus-thick",
+                            ButtonColorChoices.GREEN,
+                            permissions=["nb_risk.add_control"],
+                        ),
+                    ),
+                ),
             ),
         ),
     ),

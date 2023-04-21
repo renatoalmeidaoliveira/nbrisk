@@ -8,6 +8,7 @@ from drf_yasg.utils import swagger_serializer_method
 from netbox.api.serializers import NetBoxModelSerializer
 from nb_risk.api.nested_serializers import (
     NestedThreatSourceSerializer,
+    NestedRiskSerializer,
 )
 from .. import models, choices
 
@@ -145,4 +146,26 @@ class RiskSerializer(NetBoxModelSerializer):
             "likelihood",
             "impact",
             "notes",
+        ]
+
+# Control Serializers
+
+class ControlSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:control-detail")
+    display = serializers.SerializerMethodField('get_display')
+    risk = NestedRiskSerializer(many=True,required=False, allow_null=True)
+
+    def get_display(self, obj):
+        return obj.name
+    
+    class Meta:
+        model = models.Control
+        fields = [
+            "id",
+            "url",
+            "display",
+            "name",
+            "description",
+            "notes",
+            "risk"
         ]
