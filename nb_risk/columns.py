@@ -9,14 +9,36 @@ class CreateColumn(tables.Column):
 
     def render(self, record):
         cve = record["id"]
-        description = record["description"]
-        accessVector = record["accessVector"]
-        accessComplexity = record["accessComplexity"]
-        authentication = record["authentication"]
-        confidentialityImpact = record["confidentialityImpact"]
-        integrityImpact = record["integrityImpact"]
-        availabilityImpact = record["availabilityImpact"]
-        baseScore = record["baseScore"]
+        description = record["description"] 
+        if "accessVector" in record:
+            accessVector = record["accessVector"]
+        else:
+            accessVector = ""
+        if "accessComplexity" in record:
+            accessComplexity = record["accessComplexity"]
+        else:
+            accessComplexity = ""
+        if "authentication" in record:
+            authentication = record["authentication"]
+        else:
+            authentication = ""
+        if "confidentialityImpact" in record:
+            confidentialityImpact = record["confidentialityImpact"]
+        else:
+            confidentialityImpact = ""
+        if "integrityImpact" in record:
+            integrityImpact = record["integrityImpact"]
+        else:
+            integrityImpact = ""
+        if "availabilityImpact" in record:
+            availabilityImpact = record["availabilityImpact"]
+        else:
+            availabilityImpact = ""
+        if "baseScore" in record:
+            baseScore = record["baseScore"]
+        else:
+            baseScore = ""
+
 
         url = reverse("plugins:nb_risk:vulnerability_add")
         query = {
