@@ -22,6 +22,14 @@ class CreateColumn(tables.Column):
             authentication = record["authentication"]
         else:
             authentication = ""
+        if "userInteraction" in record:
+            userInteraction = record["userInteraction"]
+        else:
+            userInteraction = ""
+        if "scope" in record:
+            scope = record["scope"]
+        else:
+           scope = "" 
         if "confidentialityImpact" in record:
             confidentialityImpact = record["confidentialityImpact"]
         else:
@@ -48,6 +56,8 @@ class CreateColumn(tables.Column):
             "cvssaccessVector": accessVector,
             "cvssaccessComplexity": accessComplexity,
             "cvssauthentication": authentication,
+            "cvssuserInteraction": userInteraction,
+            "cvssscope": scope,
             "cvssconfidentialityImpact": confidentialityImpact,
             "cvssintegrityImpact": integrityImpact,
             "cvssavailabilityImpact": availabilityImpact,
