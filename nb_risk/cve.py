@@ -84,7 +84,7 @@ def get_cves(request):
             for metric in entry["cve"]["metrics"]:
                 if metric == "cvssMetricV2":
                     metrics = entry["cve"]["metrics"][metric][0]["cvssData"]
-                    attributes = ['accessVector', 'accessComplexity', 'authentication', 'confidentialityImpact', 'integrityImpact', 'availabilityImpact', 'baseScore']
+                    attributes = ['accessVector', 'accessComplexity', 'authentication', 'userInteraction', 'scope', 'confidentialityImpact', 'integrityImpact', 'availabilityImpact', 'baseScore']
                     for attribute in attributes:
                         if attribute in metrics:
                             cve[attribute] = metrics[attribute]
