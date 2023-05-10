@@ -1,5 +1,5 @@
-PYTHON_VER?=3.9
-NETBOX_VER?=v3.4.2
+PYTHON_VER?=3.10
+NETBOX_VER?=v3.5.1
 
 
 COMPOSE_FILE=./develop/docker-compose.yml

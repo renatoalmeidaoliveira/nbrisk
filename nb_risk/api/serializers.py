@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from netbox.api.fields import ChoiceField, ContentTypeField, SerializedPKRelatedField
 from netbox.api.serializers import WritableNestedSerializer
 from utilities.api import get_serializer_for_model
-from drf_yasg.utils import swagger_serializer_method
+
 
 from netbox.api.serializers import NetBoxModelSerializer
 from nb_risk.api.nested_serializers import (

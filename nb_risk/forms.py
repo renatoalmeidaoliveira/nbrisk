@@ -2,12 +2,8 @@ from django import forms
 
 from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm, NetBoxModelImportForm
 from dcim.models import Device, DeviceType
-from virtualization.models import VirtualMachine
-
-from utilities.forms import (
-    BootstrapMixin,
-    DatePicker,
-    CommentField,
+from utilities.forms import BootstrapMixin
+from utilities.forms.fields import (
     DynamicModelMultipleChoiceField,
     SlugField,
     DynamicModelChoiceField,
