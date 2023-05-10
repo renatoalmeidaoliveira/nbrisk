@@ -122,6 +122,9 @@ class VulnerabilityEditView(generic.ObjectEditView):
     queryset = models.Vulnerability.objects.all()
     form = forms.VulnerabilityForm
 
+class VulnerabilityBulkImportView(generic.BulkImportView):
+    queryset = models.Vulnerability.objects.all()
+    model_form = forms.VulnerabilityImportForm
 
 class VulnerabilityDeleteView(generic.ObjectDeleteView):
     queryset = models.Vulnerability.objects.all()
@@ -212,6 +215,12 @@ class VulnerabilityAssignmentEditView(generic.ObjectEditView):
 class VulnerabilityAssignmentDeleteView(generic.ObjectDeleteView):
     queryset = models.VulnerabilityAssignment.objects.all()
 
+class VulnerabilityAssignmentListView(generic.ObjectListView):
+    queryset = models.VulnerabilityAssignment.objects.all()
+    table = tables.VulnerabilityExploitListTable
+    filterset = filters.VulnerabilityAssignmentFilterSet
+    filterset_form = forms.VulnerabilityAssignmentFilterForm
+    actions = ('import', 'export', )
 
 # Risk Views
 

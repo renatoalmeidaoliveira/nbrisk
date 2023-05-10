@@ -1,6 +1,6 @@
 from django import forms
 
-from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
+from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm, NetBoxModelImportForm
 from dcim.models import Device, DeviceType
 from virtualization.models import VirtualMachine
 
@@ -81,6 +81,11 @@ class ThreatEventFilterForm(NetBoxModelFilterSetForm):
 
 
 class VulnerabilityForm(NetBoxModelForm):
+
+    fieldsets = (
+        ("Vulnerability", ("name", "cve", "description", "notes"),),
+        ("CVSSv2 Score", ("cvssaccessVector", "cvssaccessComplexity", "cvssauthentication", "cvssconfidentialityImpact", "cvssintegrityImpact", "cvssavailabilityImpact", "cvssbaseScore")),
+    )
     class Meta:
         model = models.Vulnerability
         fields = [
@@ -120,6 +125,22 @@ class VulnerabilitySearchFilterForm(NetBoxModelFilterSetForm):
         required=False,
     )
 
+class VulnerabilityImportForm(NetBoxModelImportForm):
+    class Meta:
+        model = models.Vulnerability
+        fields = [
+            "name",
+            "cve",
+            "description",
+            "notes",
+            "cvssaccessVector",
+            "cvssaccessComplexity",
+            "cvssauthentication",
+            "cvssconfidentialityImpact",
+            "cvssintegrityImpact",
+            "cvssavailabilityImpact",
+            "cvssbaseScore",
+        ]
 
 # VulnerabilityAssignment Forms
 

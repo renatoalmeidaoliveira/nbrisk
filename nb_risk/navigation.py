@@ -62,6 +62,11 @@ menu = PluginMenu(
                         ),
                     ),
                 ),
+                PluginMenuItem(
+                    permissions=["nb_risk.view_vulnerabilityassignment"],
+                    link="plugins:nb_risk:vulnerabilityassignment_list",
+                    link_text="Vulnerability Assignments",
+                ),
             ),
         ),
         (

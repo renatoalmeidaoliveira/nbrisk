@@ -46,24 +46,24 @@ class Vulnerability(NetBoxModel):
     description = models.CharField("Description", max_length=100, blank=True)
     notes = models.TextField("Notes", blank=True)
     cvssaccessVector = models.CharField(
-        "CVSS Access Vector", max_length=100, blank=True
+        "Access Vector (AV)", max_length=100, blank=True
     )
     cvssaccessComplexity = models.CharField(
-        "CVSS Access Complexity", max_length=100, blank=True
+        "Access Complexity (AC)", max_length=100, blank=True
     )
     cvssauthentication = models.CharField(
-        "CVSS Authentication", max_length=100, blank=True
+        "Authentication (Au)", max_length=100, blank=True
     )
     cvssconfidentialityImpact = models.CharField(
-        "CVSS Confidentiality Impact", max_length=100, blank=True
+        "Confidentiality Impact (C)", max_length=100, blank=True
     )
     cvssintegrityImpact = models.CharField(
-        "CVSS Integrity Impact", max_length=100, blank=True
+        "Integrity Impact (I)", max_length=100, blank=True
     )
     cvssavailabilityImpact = models.CharField(
-        "CVSS Availability Impact", max_length=100, blank=True
+        "Availability Impact (A)", max_length=100, blank=True
     )
-    cvssbaseScore = models.FloatField("CVSS Base Score", max_length=100, blank=True)
+    cvssbaseScore = models.FloatField("Base Score", max_length=100, blank=True)
 
     @property
     def affected_assets(self):
@@ -76,6 +76,7 @@ class Vulnerability(NetBoxModel):
         return reverse("plugins:nb_risk:vulnerability", args=[self.pk])
 
     class Meta:
+        verbose_name = "Vulnerability"
         verbose_name_plural = "Vulnerabilities"
 
 

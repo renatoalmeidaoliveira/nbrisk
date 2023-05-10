@@ -85,6 +85,7 @@ urlpatterns = (
         views.VulnerabilityEditView.as_view(),
         name="vulnerability_edit",
     ),
+    path('vulnerability/import/', views.VulnerabilityBulkImportView.as_view(), name='vulnerability_import'),
     path(
         "vulnerability/<int:pk>/delete/",
         views.VulnerabilityDeleteView.as_view(),
@@ -116,6 +117,10 @@ urlpatterns = (
         "vulnerability-assignments/add/",
         views.VulnerabilityAssignmentEditView.as_view(),
         name="vulnerabilityassignment_add",
+    ),
+    path("vulnerability-assignments/",
+        views.VulnerabilityAssignmentListView.as_view(),
+        name="vulnerabilityassignment_list",
     ),
     path(
         "vulnerability-assignments/<int:pk>/delete/",
