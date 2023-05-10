@@ -11,8 +11,13 @@ This plugin in compatible with [NetBox](https://netbox.readthedocs.org/) 3.4.0 a
 The plugin is available as a Python package and can be installed with pip.
 To ensure NBRisk plugin is automatically re-installed during future upgrades, create a file named local_requirements.txt (if not already existing) in the NetBox root directory (alongside requirements.txt) and list the NBRisk package:
 
+### For NetBox 3.4.x
 ```shell
-# echo "NbRisk" >> local_requirements.txt
+# echo "NbRisk==^34.0.0" >> local_requirements.txt 
+```
+### For NetBox 3.5.x
+```shell
+# echo "NbRisk==^35.0.0" >> local_requirements.txt 
 ```
 
 Once installed, the plugin needs to be enabled in your configuration.py
