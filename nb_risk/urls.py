@@ -1,7 +1,10 @@
-from django.urls import path
+from django.urls import path, include
+from utilities.urls import get_model_urls
 from netbox.views.generic import ObjectChangeLogView, ObjectJournalView
 
 from . import models, views, cve
+
+app_name = 'nb_risk'
 
 urlpatterns = (
     # ThreatSource URLs
@@ -38,11 +41,7 @@ urlpatterns = (
         "threat-event/add/", views.ThreatEventEditView.as_view(), name="threatevent_add"
     ),
     path("threat-event/<int:pk>/", views.ThreatEventView.as_view(), name="threatevent"),
-    path(
-        "threat-event/<int:pk>/vulnerabilities/",
-        views.ThreatEventVulnerabilityView.as_view(),
-        name="threatevent_vulnerabilities",
-    ),
+    path('threat-event/<int:pk>/', include(get_model_urls(app_name, 'threatevent'))),
     path(
         "threat-event/<int:pk>/edit/",
         views.ThreatEventEditView.as_view(),
@@ -57,12 +56,6 @@ urlpatterns = (
         "threat-event/delete/",
         views.ThreatEventBulkDeleteView.as_view(),
         name="threatevent_bulk_delete",
-    ),
-    path(
-        "threat-event/<int:pk>/changelog/",
-        ObjectChangeLogView.as_view(),
-        name="threatevent_changelog",
-        kwargs={"model": models.ThreatEvent},
     ),
     # Vulnerability URLs
     path(
@@ -96,17 +89,7 @@ urlpatterns = (
         views.VulnerabilityBulkDeleteView.as_view(),
         name="vulnerability_bulk_delete",
     ),
-    path(
-        "vulnerability/<int:pk>/changelog/",
-        ObjectChangeLogView.as_view(),
-        name="vulnerability_changelog",
-        kwargs={"model": models.Vulnerability},
-    ),
-    path(
-        "vulnerability/<int:pk>/affected-assets/",
-        views.VulnerabilityAffectedAssetsView.as_view(),
-        name="vulnerability_affected_assets",
-    ),
+    path('vulnerability/<int:pk>/', include(get_model_urls(app_name, 'vulnerability'))),
     path(
         "vulnerability/search/",
         cve.VulnerabilitySearchView.as_view(),
@@ -157,27 +140,6 @@ urlpatterns = (
     path(
         "control/delete/", views.ControlBulkDeleteView.as_view(), name="control_bulk_delete"
     ),
-    path(
-        "control/<int:pk>/changelog/",
-        ObjectChangeLogView.as_view(),
-        name="control_changelog",
-        kwargs={"model": models.Control},
-    ),
-    path(        
-        "control/<int:pk>/journal/",
-        ObjectJournalView.as_view(),
-        name="control_journal",
-        kwargs={"model": models.Control},
-    ),
-    path(
-        "control/<int:pk>/risks/",
-        views.ControlRisksView.as_view(),
-        name="control_risks",
-    ),
-    path(
-        "control/<int:pk>/assets/",
-        views.ControlAssetsView.as_view(),
-        name="control_assets",
-    ),
+    path('control/<int:pk>/', include(get_model_urls(app_name, 'control'))),
     
 )

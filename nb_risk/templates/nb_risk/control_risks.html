@@ -1,29 +1,5 @@
 {% extends 'generic/object.html' %}
 {% load render_table from django_tables2 %}
-{% load tabs %}
-
-
-{% block tabs %}
-  <ul class="nav nav-tabs px-3">
-    {# Primary tab #}
-    <li class="nav-item" role="presentation">
-      <a class="nav-link{% if not tab %} active{% endif %}" href="{{ object.get_absolute_url }}">{{ object|meta:"verbose_name"|bettertitle }}</a>
-    </li>
-    <li role="presentation" class="nav-item">
-        <a href="{% url 'plugins:nb_risk:control_risks' pk=object.pk %}" class="nav-link{% if tab == 'risks' %} active{% endif %}">
-            Risks  {% if risks_count  %}<span class="badge bg-secondary">{{ risks_count }}</span>{% endif %}
-        </a>
-    </li>
-    <li role="presentation" class="nav-item">
-        <a href="{% url 'plugins:nb_risk:control_assets' pk=object.pk %}" class="nav-link{% if tab == 'assets' %} active{% endif %}">
-            Related Assets  {% if assets_count  %}<span class="badge bg-secondary">{{ assets_count }}</span>{% endif %}
-        </a>
-    </li>
-
-    {# Include tabs for registered model views #}
-    {% model_view_tabs object %}
-  </ul>
-{% endblock tabs %}
 
 {% block content %}
 <div class="card">

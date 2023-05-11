@@ -44,18 +44,17 @@ class ThreatEventView(generic.ObjectView):
     queryset = models.ThreatEvent.objects.all()
 
 
-class ThreatEventVulnerabilityView(generic.ObjectView):
+@register_model_view(models.ThreatEvent, name='vulnerabilities')
+class ThreatEventVulnerabilityView(generic.ObjectChildrenView):
     queryset = models.ThreatEvent.objects.all()
+    child_model = models.Vulnerability
+    table = tables.VulnerabilityExploitListTable
     template_name = "nb_risk/threatevent_vulnerabilities.html"
+    tab = ViewTab(label='Exploit Vulnerabilities', badge=lambda obj: obj.vulnerability.all().count(), hide_if_empty=True)
 
-    def get_extra_context(self, request, instance):
-        vulnerabilities = instance.vulnerability.all()
-        table = tables.VulnerabilityExploitListTable(vulnerabilities)
-        data = {
-            "tab": "vulnerabilities",
-            "table": table,
-        }
-        return data
+    def get_children(self, request, parent):
+            childrens = parent.vulnerability.all()
+            return childrens
 
 
 class ThreatEventListView(generic.ObjectListView):
@@ -85,31 +84,20 @@ class ThreatEventBulkDeleteView(generic.BulkDeleteView):
 class VulnerabilityView(generic.ObjectView):
     queryset = models.Vulnerability.objects.all()
 
-    def get_extra_context(self, request, instance):
-        affected_assets_count = models.VulnerabilityAssignment.objects.filter(
-            vulnerability=instance
-        ).count()
-        data = {
-            "affected_assets_count": affected_assets_count,
-        }
-        return data
 
-
-class VulnerabilityAffectedAssetsView(generic.ObjectView):
+@register_model_view(models.Vulnerability, name='affected_assets')
+class VulnerabilityAffectedAssetsView(generic.ObjectChildrenView):
     queryset = models.Vulnerability.objects.all()
+    child_model = models.Vulnerability
+    table = tables.VulnerabilityAssignmentListTable
     template_name = "nb_risk/vulnerability_affected_assets.html"
+    tab = ViewTab(label='Affected Assets', badge=lambda obj: models.VulnerabilityAssignment.objects.filter(vulnerability=obj).count(), hide_if_empty=True)
 
-    def get_extra_context(self, request, instance):
-        assets = models.VulnerabilityAssignment.objects.filter(vulnerability=instance)
-        table = tables.VulnerabilityAssignmentListTable(assets)
-        data = {
-            "tab": "affected_assets",
-            "affected_assets_count": assets.count(),
-            "table": table,
-        }
-        return data
+    def get_children(self, request, parent):
+            childrens = models.VulnerabilityAssignment.objects.filter(vulnerability=parent)
+            return childrens
 
-
+    
 class VulnerabilityListView(generic.ObjectListView):
     queryset = models.Vulnerability.objects.all()
     table = tables.VulnerabilityTable
@@ -272,42 +260,38 @@ class ControlView(generic.ObjectView):
         }
         return data
 
-class ControlRisksView(generic.ObjectView):
+@register_model_view(models.Control, name='risks')
+class ControlRisksView(generic.ObjectChildrenView):
     queryset = models.Control.objects.all()
+    child_model = models.Risk
+    table = tables.RiskTable
     template_name = "nb_risk/control_risks.html"
-    
-    def get_extra_context(self, request, instance):
-        risks = instance.risk.all()
-        thread_events = []
-        for risk in risks:
-            thread_events.append(risk.threat_event)
-        assets = models.VulnerabilityAssignment.objects.filter(threat_events__in=thread_events)
-        table = tables.RiskTable(risks)
-        data = {
-            "tab": "risks",
-            "risks_count": risks.count(),
-            "assets_count": assets.count(),
-            "table": table,
-        }
-        return data
+    tab = ViewTab(label='Risks', badge=lambda obj: obj.risk.all().count(), hide_if_empty=True)
 
-class ControlAssetsView(generic.ObjectView):
-    queryset = models.Control.objects.all()
-    template_name = "nb_risk/control_assets.html"
-    
-    def get_extra_context(self, request, instance):
+    def get_children(self, request, parent):
+            childrens = parent.risk.all()
+            return childrens
+
+def _get_assets(instance):
         risks = instance.risk.all()
         thread_events = []
         for risk in risks:
             thread_events.append(risk.threat_event)
         assets = models.VulnerabilityAssignment.objects.filter(threat_events__in=thread_events)
-        table = tables.VulnerabilityAssignmentListTable(assets)
-        data = {
-            "tab": "assets",
-            "assets_count": assets.count(),
-            "table": table,
-        }
-        return data
+        return assets
+
+@register_model_view(models.Control, name='assets')
+class ControlAssetsView(generic.ObjectChildrenView):
+    queryset = models.Control.objects.all()
+    child_model = models.VulnerabilityAssignment
+    table = tables.VulnerabilityAssignmentListTable
+    template_name = "nb_risk/control_assets.html"
+    tab = ViewTab(label='Related Assets', badge=lambda obj: _get_assets(obj).count(), hide_if_empty=True)
+
+
+    def get_children(self, request, parent):
+            childrens = _get_assets(parent)
+            return childrens
 
 class ControlEditView(generic.ObjectEditView):
     queryset = models.Control.objects.all()
