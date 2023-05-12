@@ -1,6 +1,8 @@
 import django_tables2 as tables
+from django_tables2.utils import Accessor
 
-from netbox.tables import NetBoxTable, ChoiceFieldColumn, columns
+from netbox.tables import NetBoxTable, columns
+from django.db.models import Count
 
 from . import models
 from . import columns as riskColumns
@@ -35,11 +37,25 @@ class ThreatEventTable(NetBoxTable):
 class VulnerabilityTable(NetBoxTable):
 
     name = tables.Column(linkify=True)
-    affected_assets = tables.Column(verbose_name="Affected Assets")
+    affected = columns.LinkedCountColumn(
+        verbose_name="Affected Assets",
+        accessor=Accessor("affected_assets"),
+        viewname='plugins:nb_risk:vulnerabilityassignment_list',
+        url_params={
+            'vulnerability': 'name',
+        },
+    )
+
+    def order_affected(self, queryset, is_descending):
+        if is_descending:
+            queryset = queryset.annotate(affected_assets=Count('vulnerability_assignments')).order_by('-affected_assets')
+        else:
+            queryset = queryset.annotate(affected_assets=Count('vulnerability_assignments')).order_by('affected_assets')
+        return (queryset, True)
 
     class Meta(NetBoxTable.Meta):
         model = models.Vulnerability
-        fields = ["name", "cve", "description", "affected_assets", "cvssbaseScore"]
+        fields = ["name", "cve", "description", "affected", "cvssbaseScore"]
 
 
 # VulnerabilityAssignment Tables
