@@ -65,7 +65,6 @@ class Vulnerability(NetBoxModel):
     )
     cvssbaseScore = models.FloatField("Base Score", max_length=100, blank=True)
 
-    @property
     def affected_assets(self):
         return self.vulnerability_assignments.count()
 
