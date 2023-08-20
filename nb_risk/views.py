@@ -3,7 +3,7 @@ from dcim.models import Device, Site
 from tenancy.models import Tenant
 from virtualization.models import VirtualMachine
 
-from extras.plugins import get_plugin_config
+from extras.plugins.utils import get_plugin_config
 from utilities.views import ViewTab, register_model_view
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404

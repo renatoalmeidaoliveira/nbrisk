@@ -1,4 +1,5 @@
-from extras.plugins import PluginTemplateExtension, get_plugin_config
+from extras.plugins import PluginTemplateExtension
+from extras.plugins.utils import get_plugin_config
 from django.conf import settings
 from packaging import version
 

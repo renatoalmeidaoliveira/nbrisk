@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.urls import reverse
+from django.db.models.functions import Lower
 
 from netbox.models import NetBoxModel
 from . import choices
@@ -63,7 +64,7 @@ class Vulnerability(NetBoxModel):
     cvssavailabilityImpact = models.CharField(
         "Availability Impact (A)", max_length=100, blank=True
     )
-    cvssbaseScore = models.FloatField("Base Score", max_length=100, blank=True)
+    cvssbaseScore = models.FloatField("Base Score", max_length=100, blank=True, null=True,)
 
     def affected_assets(self):
         return self.vulnerability_assignments.count()
@@ -77,6 +78,12 @@ class Vulnerability(NetBoxModel):
     class Meta:
         verbose_name = "Vulnerability"
         verbose_name_plural = "Vulnerabilities"
+        constraints = (
+            models.UniqueConstraint(
+                Lower('name'),
+                 name="unique_vuln_name"
+            ),
+        )
 
 
 # VulnearbilityAssingment Model

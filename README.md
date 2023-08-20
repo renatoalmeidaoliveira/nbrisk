@@ -1,5 +1,5 @@
 ## Netbox Nbrisk
-[Netbox](https://github.com/netbox-community/netbox) Plugin inspired in NIST 800-30 Risk Management  **BETA VERSION**
+[Netbox](https://github.com/netbox-community/netbox) Plugin inspired in NIST 800-30 Risk Management
 
 
 ## Compatibility
@@ -13,11 +13,15 @@ To ensure NBRisk plugin is automatically re-installed during future upgrades, cr
 
 ### For NetBox 3.4.x
 ```shell
-# echo "NbRisk==^34.0.0" >> local_requirements.txt 
+# echo "NbRisk==34.*" >> local_requirements.txt 
 ```
-### For NetBox 3.5.x
+### For NetBox 3.5.0 to 3.5.7
 ```shell
-# echo "NbRisk==^35.0.0" >> local_requirements.txt 
+# echo "NbRisk==35.0.*" >> local_requirements.txt 
+```
+### For NetBox 3.5.8 or grater
+```shell
+# echo "NbRisk==35.1.*" >> local_requirements.txt 
 ```
 
 Once installed, the plugin needs to be enabled in your configuration.py
