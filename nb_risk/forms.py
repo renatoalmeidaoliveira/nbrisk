@@ -1,6 +1,12 @@
 from django import forms
 
-from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm, NetBoxModelImportForm
+from netbox.forms import (
+    NetBoxModelForm,
+    NetBoxModelFilterSetForm,
+    NetBoxModelBulkEditForm,
+    NetBoxModelImportForm,
+)
+
 from dcim.models import Device, DeviceType
 from utilities.forms import BootstrapMixin
 from utilities.forms.fields import (
@@ -35,6 +41,28 @@ class ThreatSourceFilterForm(NetBoxModelFilterSetForm):
         fields = ["name", "threat_type", "capability", "intent", "targeting"]
 
 
+class ThreatSourceImportForm(NetBoxModelImportForm):
+    class Meta:
+        model = models.ThreatSource
+        fields = [
+            "name",
+            "threat_type",
+            "capability",
+            "intent",
+            "targeting",
+            "description",
+            "notes",
+        ]
+
+class ThreatSourceBulkEditForm(NetBoxModelBulkEditForm):
+    model = models.ThreatSource
+
+    comments = forms.Textarea(
+        attrs={'class': 'font-monospace'}
+    )
+
+    class Meta:
+        nullable_fields = ("intent", "targeting", "description", "notes")
 # ThreatEvent Forms
 
 

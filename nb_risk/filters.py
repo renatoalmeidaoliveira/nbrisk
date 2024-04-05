@@ -9,7 +9,7 @@ from . import models
 class ThreatSourceFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = models.ThreatSource
-        fields = ["threat_type", "capability", "intent", "targeting"]
+        fields = ["id", "name", "threat_type", "capability", "intent", "targeting"]
 
 
 # ThreatEvent Filters
@@ -28,7 +28,19 @@ class VulnerabilityFilterSet(NetBoxModelFilterSet):
 
     class Meta:
         model = models.Vulnerability
-        fields = ("name", "cve",)
+        fields = [
+            "id",
+            "name",
+            "cve",
+            "description",
+            "cvssaccessVector",
+            "cvssaccessComplexity",
+            "cvssauthentication",
+            "cvssconfidentialityImpact",
+            "cvssintegrityImpact",
+            "cvssavailabilityImpact",
+            "cvssbaseScore",
+            ]
 
     def search(self, queryset, name, value):
         if not value.strip():

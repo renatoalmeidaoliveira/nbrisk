@@ -2,10 +2,10 @@ from netbox.views import generic
 from dcim.models import Device, Site
 from tenancy.models import Tenant
 from virtualization.models import VirtualMachine
+from core.models import ContentType
 
 from extras.plugins.utils import get_plugin_config
 from utilities.views import ViewTab, register_model_view
-from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
 
 import logging
@@ -32,6 +32,21 @@ class ThreatSourceEditView(generic.ObjectEditView):
     queryset = models.ThreatSource.objects.all()
     form = forms.ThreatSourceForm
 
+
+class ThreatSourceImportView(generic.BulkImportView):
+    queryset = models.ThreatSource.objects.all()
+    model_form = forms.ThreatSourceImportForm
+    table = tables.ThreatSourceTable
+
+class ThreatSourceBulkEditView(generic.BulkEditView):
+    queryset = models.ThreatSource.objects.all()
+    filterset = filters.ThreatSourceFilterSet
+    table = tables.ThreatSourceTable
+    form = forms.ThreatSourceBulkEditForm
+
+class ThreatSourceBulkDeleteView(generic.BulkDeleteView):
+    queryset = models.ThreatSource.objects.all()
+    table = tables.ThreatSourceTable
 
 class ThreatSourceDeleteView(generic.ObjectDeleteView):
     queryset = models.ThreatSource.objects.all()

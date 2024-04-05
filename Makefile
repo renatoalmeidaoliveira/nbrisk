@@ -1,5 +1,5 @@
 PYTHON_VER?=3.10
-NETBOX_VER?=v3.5.8
+NETBOX_VER?=v3.7.0
 
 
 COMPOSE_FILE=./develop/docker-compose.yml
@@ -46,6 +46,10 @@ migrations:
 	run netbox python manage.py makemigrations ${BUILD_NAME}
 	docker-compose -f ${COMPOSE_FILE} -p ${BUILD_NAME} down
 
+
+test:
+	docker-compose -f ${COMPOSE_FILE} -p ${BUILD_NAME} run netbox python manage.py test --parallel --keepdb ${BUILD_NAME}
+	
 
 pbuild:
 	python3 -m pip install --upgrade build
