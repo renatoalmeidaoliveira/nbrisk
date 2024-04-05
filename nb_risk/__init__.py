@@ -10,6 +10,8 @@ class NbriskConfig(PluginConfig):
     version = __version__
     author = "Renato Almdida Oliveira"
     author_email = "renato.almeida.oliveira@gmail.com"
+    min_version = "3.5.0"
+    max_version = "3.7.99"
     required_settings = []
     default_settings = {
         "supported_assets": [

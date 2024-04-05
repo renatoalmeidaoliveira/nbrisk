@@ -15,7 +15,7 @@ To ensure NBRisk plugin is automatically re-installed during future upgrades, cr
 ```shell
 # echo "NbRisk==34.*" >> local_requirements.txt 
 ```
-### For NetBox 3.5.0 to 3.5.7
+### For NetBox 3.5.0 to 3.7.99
 ```shell
 # echo "NbRisk==35.0.*" >> local_requirements.txt 
 ```
