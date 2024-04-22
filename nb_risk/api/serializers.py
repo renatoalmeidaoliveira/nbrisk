@@ -9,6 +9,7 @@ from netbox.api.serializers import NetBoxModelSerializer
 from nb_risk.api.nested_serializers import (
     NestedThreatSourceSerializer,
     NestedRiskSerializer,
+    NestedVulnerabilityAssignmentSerializer,
 )
 from .. import models, choices
 
@@ -94,12 +95,18 @@ class VulnerabilityAssignmentSerializer(NetBoxModelSerializer):
     asset_object_type = ContentTypeField(
         queryset=ContentType.objects.filter(choices.AssetTypes),
         required=True,
-        allow_null=True
     )
-    asset = serializers.SerializerMethodField(read_only=True)
+    asset = serializers.SerializerMethodField('get_asset')
     vulnerability = serializers.SlugRelatedField(slug_field="name", queryset=models.Vulnerability.objects.all())
 
-    asset_object_id = serializers.IntegerField(source='asset.id')
+    asset_id = serializers.IntegerField(source='asset.id')
+
+    def validate(self, data):
+        asset_id = data['asset']['id']
+        asset_object_type = data['asset_object_type']
+        asset = asset_object_type.get_object_for_this_type(id=asset_id)
+        data['asset'] = asset
+        return super().validate(data)
 
     def get_asset(self, obj):
         if obj.asset is None:
@@ -111,6 +118,7 @@ class VulnerabilityAssignmentSerializer(NetBoxModelSerializer):
     def get_display(self, obj):
         return obj.name
 
+
     class Meta:
         model = models.VulnerabilityAssignment
         fields = [
@@ -118,7 +126,7 @@ class VulnerabilityAssignmentSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "asset_object_type",
-            "asset_object_id",
+            "asset_id",
             "asset",
             "vulnerability",
         ]

@@ -32,3 +32,18 @@ class NestedRiskSerializer(WritableNestedSerializer):
     class Meta:
         model = models.Risk
         fields = ["id", "url", "display", "name"]
+
+# VulnerabilityAssignment Nested Serializers
+
+class NestedVulnerabilityAssignmentSerializer(WritableNestedSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name="plugins-api:nb_risk-api:vulnerabilityassignment-detail"
+    )
+    display = serializers.SerializerMethodField('get_display')
+    
+    def get_display(self, obj):
+        return obj.name
+
+    class Meta:
+        model = models.VulnerabilityAssignment
+        fields = ["id", "url", "display"]
