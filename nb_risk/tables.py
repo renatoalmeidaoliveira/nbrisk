@@ -86,7 +86,6 @@ class VulnerabilityAssignmentListTable(NetBoxTable):
 
 class VulnerabilityExploitListTable(NetBoxTable):
 
-    actions = columns.ActionsColumn(actions=("delete",))
 
     asset = tables.Column(linkify=True)
 
@@ -118,24 +117,22 @@ class RiskTable(NetBoxTable):
 # CVE Tables
 
 
-class CveTable(tables.Table):
+class CveTable(NetBoxTable):
 
     id = tables.Column(attrs={"td": {"class": "text-end text-nowrap"}})
     description = tables.Column()
     accessVector = tables.Column(verbose_name="Access Vector")
-    accessComplexity = tables.Column(verbose_name="Access Complexity")
-    authentication = tables.Column(verbose_name="Authentication")
-    confidentialityImpact = tables.Column(verbose_name="Confidentiality Impact")
-    integrityImpact = tables.Column(verbose_name="Integrity Impact")
-    availabilityImpact = tables.Column(verbose_name="Availability Impact")
-    baseScore = tables.Column(verbose_name="Base Score")
 
     create = riskColumns.CreateColumn(empty_values=())
 
-    class Meta:
-        attrs = {
-            "class": "table table-hover object-list",
-        }
+    class Meta(NetBoxTable.Meta):
+        model = models.Vulnerability
+        fields = ["id",
+                  "description",
+                  "accessVector", 
+                  "create"
+                  ]
+
 
 # Control Tables
 

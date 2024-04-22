@@ -1,18 +1,23 @@
+from django.core.exceptions import MultipleObjectsReturned, ValidationError, ObjectDoesNotExist
+from django.contrib.contenttypes.models import ContentType
+
 from netbox.views import generic
 from dcim.models import Device, Site
 from tenancy.models import Tenant
 from virtualization.models import VirtualMachine
-from core.models import ContentType
+from core.models import ObjectType as ContentType
+from ipam.models import IPAddress
 
-from extras.plugins.utils import get_plugin_config
+from netbox.plugins.utils import get_plugin_config
 from utilities.views import ViewTab, register_model_view
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 
 import logging
 
 logger = logging.getLogger(__name__)
 
-from . import forms, models, tables, filters
+from . import forms, models, tables, filtersets
 
 # ThreatSource Views
 
@@ -24,7 +29,7 @@ class ThreatSourceView(generic.ObjectView):
 class ThreatSourceListView(generic.ObjectListView):
     queryset = models.ThreatSource.objects.all()
     table = tables.ThreatSourceTable
-    filterset = filters.ThreatSourceFilterSet
+    filterset = filtersets.ThreatSourceFilterSet
     filterset_form = forms.ThreatSourceFilterForm
 
 
@@ -40,7 +45,7 @@ class ThreatSourceImportView(generic.BulkImportView):
 
 class ThreatSourceBulkEditView(generic.BulkEditView):
     queryset = models.ThreatSource.objects.all()
-    filterset = filters.ThreatSourceFilterSet
+    filterset = filtersets.ThreatSourceFilterSet
     table = tables.ThreatSourceTable
     form = forms.ThreatSourceBulkEditForm
 
@@ -75,7 +80,7 @@ class ThreatEventVulnerabilityView(generic.ObjectChildrenView):
 class ThreatEventListView(generic.ObjectListView):
     queryset = models.ThreatEvent.objects.all()
     table = tables.ThreatEventTable
-    filterset = filters.ThreatEventFilterSet
+    filterset = filtersets.ThreatEventFilterSet
     filterset_form = forms.ThreatEventFilterForm
 
 
@@ -116,7 +121,7 @@ class VulnerabilityAffectedAssetsView(generic.ObjectChildrenView):
 class VulnerabilityListView(generic.ObjectListView):
     queryset = models.Vulnerability.objects.all()
     table = tables.VulnerabilityTable
-    filterset = filters.VulnerabilityFilterSet
+    filterset = filtersets.VulnerabilityFilterSet
     filterset_form = forms.VulnerabilityFilterForm
     template_name = "nb_risk/vulnerability_list.html"
 
@@ -198,6 +203,7 @@ class VulnerabilityAssignmentEditView(generic.ObjectEditView):
     template_name = "nb_risk/generic_vulnerability_assignment_edit.html"
 
     def alter_object(self, instance, request, args, kwargs):
+
         if not instance.pk:
             # Assign the object based on URL kwargs
             content_type = get_object_or_404(
@@ -206,8 +212,10 @@ class VulnerabilityAssignmentEditView(generic.ObjectEditView):
             instance.object = get_object_or_404(
                 content_type.model_class(), pk=request.GET.get("asset_id")
             )
+        else:
+            instance.object = instance.asset
         return instance
-
+    
     def get_extra_addanother_params(self, request):
         return {
             "asset_object_type": request.GET.get("asset_object_type"),
@@ -218,12 +226,37 @@ class VulnerabilityAssignmentEditView(generic.ObjectEditView):
 class VulnerabilityAssignmentDeleteView(generic.ObjectDeleteView):
     queryset = models.VulnerabilityAssignment.objects.all()
 
+class VulnerabilityAssignmentBulkDeleteView(generic.BulkDeleteView):
+    queryset = models.VulnerabilityAssignment.objects.all()
+    table = tables.VulnerabilityExploitListTable
+
 class VulnerabilityAssignmentListView(generic.ObjectListView):
     queryset = models.VulnerabilityAssignment.objects.all()
     table = tables.VulnerabilityExploitListTable
-    filterset = filters.VulnerabilityAssignmentFilterSet
+    filterset = filtersets.VulnerabilityAssignmentFilterSet
     filterset_form = forms.VulnerabilityAssignmentFilterForm
-    actions = ('import', 'export', )
+
+class VulnerabilityAssignmentImportView(generic.BulkImportView):
+    queryset = models.VulnerabilityAssignment.objects.all()
+    model_form = forms.VulnerabilityAssignmentImportForm
+    table = tables.VulnerabilityExploitListTable
+
+    def save_object(self, object_form, request):
+        if object_form.cleaned_data["ip_address"] is not None:
+            ip_address = object_form.cleaned_data["ip_address"]
+            parent = ip_address.assigned_object.parent_object
+            vulnAssingment = models.VulnerabilityAssignment(
+                vulnerability=object_form.cleaned_data["vulnerability"],
+                asset = parent,
+            )
+            vulnAssingment.full_clean()
+            vulnAssingment.save()
+            return vulnAssingment                        
+
+
+        return object_form.save()
+
+
 
 # Risk Views
 
@@ -231,7 +264,7 @@ class VulnerabilityAssignmentListView(generic.ObjectListView):
 class RiskListView(generic.ObjectListView):
     queryset = models.Risk.objects.all()
     table = tables.RiskTable
-    filterset = filters.RiskFilterSet
+    filterset = filtersets.RiskFilterSet
     filterset_form = forms.RiskFilterForm
 
 
@@ -257,7 +290,7 @@ class RiskBulkDeleteView(generic.BulkDeleteView):
 class ControlListView(generic.ObjectListView):
     queryset = models.Control.objects.all()
     table = tables.ControlTable
-    filterset = filters.ControlFilterSet
+    filterset = filtersets.ControlFilterSet
     filterset_form = forms.ControlFilterForm
 
 class ControlView(generic.ObjectView):

@@ -9,7 +9,7 @@ from . import models
 class ThreatSourceFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = models.ThreatSource
-        fields = ["id", "name", "threat_type", "capability", "intent", "targeting"]
+        fields = ["id", "name", "threat_type", "capability", "intent", "targeting", "description", "notes"]
 
 
 # ThreatEvent Filters
@@ -33,6 +33,7 @@ class VulnerabilityFilterSet(NetBoxModelFilterSet):
             "name",
             "cve",
             "description",
+            "notes",
             "cvssaccessVector",
             "cvssaccessComplexity",
             "cvssauthentication",

@@ -38,7 +38,10 @@ class CreateColumn(tables.Column):
             baseScore = record["baseScore"]
         else:
             baseScore = ""
-
+        if "return_url" in record:
+            return_url = record["return_url"]
+        else:
+            return_url = None
 
         url = reverse("plugins:nb_risk:vulnerability_add")
         query = {
@@ -53,6 +56,9 @@ class CreateColumn(tables.Column):
             "cvssavailabilityImpact": availabilityImpact,
             "cvssbaseScore": baseScore,
         }
+        if return_url:
+            query["return_url"] = return_url
+            
         encoded_query = urlencode(query)
         url = f"{url}?{encoded_query}"
 

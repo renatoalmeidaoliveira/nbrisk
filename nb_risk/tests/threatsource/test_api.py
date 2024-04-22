@@ -43,4 +43,4 @@ class ApplicationAPITestCase(
             {"name": "ThreatSource Y","threat_type": choices.ThreatTypeChoices.THREAT_TYPE_1,"capability": choices.CapabilityChoices.CAPABILITY_1, "description": "Another new threat source", },
         ]
 
-        cls.brief_fields = ['display', 'id', 'name', 'url']
+        cls.brief_fields = ['description', 'display', 'id','name', 'url'   ]

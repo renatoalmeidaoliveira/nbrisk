@@ -3,7 +3,7 @@ from django.test import TestCase
 from utilities.testing import ChangeLoggedFilterSetTests
 
 from nb_risk.models import ThreatSource
-from nb_risk.filters import ThreatSourceFilterSet
+from nb_risk.filtersets import ThreatSourceFilterSet
 from nb_risk import choices
 
 

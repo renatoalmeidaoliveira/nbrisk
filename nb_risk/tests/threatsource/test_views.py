@@ -5,7 +5,7 @@ from nb_risk.models import ThreatSource
 from nb_risk import choices
 
 
-class ControlViewTestCase(
+class ThreatSourceViewTestCase(
     ModelViewTestCase,
     ViewTestCases.GetObjectViewTestCase,
     ViewTestCases.CreateObjectViewTestCase,

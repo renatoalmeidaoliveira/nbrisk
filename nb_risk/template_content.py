@@ -1,5 +1,5 @@
-from extras.plugins import PluginTemplateExtension
-from extras.plugins.utils import get_plugin_config
+from netbox.plugins import PluginTemplateExtension
+from netbox.plugins.utils import get_plugin_config
 from django.conf import settings
 from packaging import version
 

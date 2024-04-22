@@ -1,5 +1,6 @@
-from extras.plugins import PluginConfig
+from netbox.plugins import PluginConfig
 from .version import __version__
+
 
 
 class NbriskConfig(PluginConfig):
@@ -10,8 +11,8 @@ class NbriskConfig(PluginConfig):
     version = __version__
     author = "Renato Almdida Oliveira"
     author_email = "renato.almeida.oliveira@gmail.com"
-    min_version = "3.5.0"
-    max_version = "3.7.99"
+#    min_version = "4.0.0"
+    max_version = "4.0.99"
     required_settings = []
     default_settings = {
         "supported_assets": [
@@ -21,7 +22,7 @@ class NbriskConfig(PluginConfig):
             "dcim.site",
         ],
         "additional_assets": [],
+        "proxies": {},
     }
-
 
 config = NbriskConfig  # noqa
