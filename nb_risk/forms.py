@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.contenttypes.models import ContentType
 
 from netbox.forms import (
     NetBoxModelForm,
@@ -6,13 +7,16 @@ from netbox.forms import (
     NetBoxModelBulkEditForm,
     NetBoxModelImportForm,
 )
-
+from ipam.models import IPAddress
 from dcim.models import Device, DeviceType
 from utilities.forms import BootstrapMixin
 from utilities.forms.fields import (
     DynamicModelMultipleChoiceField,
     SlugField,
     DynamicModelChoiceField,
+    CSVModelMultipleChoiceField,
+    CSVModelChoiceField,
+    CSVContentTypeField,
 )
 
 from . import models, choices
@@ -135,8 +139,19 @@ class VulnerabilityFilterForm(NetBoxModelFilterSetForm):
 
 
 class VulnerabilitySearchFilterForm(NetBoxModelFilterSetForm):
+    
     model = models.Vulnerability
-    q = forms.CharField(label="cpeName", required=False)
+
+    fieldsets = (
+        ("CVE", ("cve", "keyword") ),
+        ("CPE", ("cpe", "device_type", "version", "part")),
+    )    
+
+    cpe = forms.CharField(label="CPE Name", required=False)
+
+    cve = forms.CharField(label="CVE", required=False)
+
+    keyword = forms.CharField(label="Keyword", required=False)
 
     device_type = DynamicModelChoiceField(
         queryset=DeviceType.objects.all(),
@@ -190,6 +205,69 @@ class VulnerabilityAssignmentFilterForm(NetBoxModelFilterSetForm):
 
     class Meta:
         fields = ["vulnerability"]
+
+class VulnerabilityAssignmentImportForm(NetBoxModelImportForm):
+    vulnerability = CSVModelChoiceField(
+        label="Vulnerability",
+        queryset=models.Vulnerability.objects.all(),
+        required=True,
+        to_field_name="name",
+        error_messages={
+            "invalid_choice": "Vulnerability name not found",
+        }
+    )
+
+    asset_object_type = CSVContentTypeField(
+        queryset=ContentType.objects.all(),
+        help_text= "Assigned object types",
+        required=False,
+    )
+
+    ip_address = CSVModelChoiceField(
+        label="IP Address",
+        queryset= IPAddress.objects.all(),
+        required=False,
+        to_field_name='address',
+        error_messages={
+            "invalid_choice": "IPAddress not found",
+        }
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        asset_type = self.cleaned_data.get("asset_object_type")
+        asset_id = self.cleaned_data.get("asset_id")
+        ip_address = self.cleaned_data.get("ip_address")
+        vuln = self.cleaned_data.get("vulnerability")
+        if asset_type and asset_id and ip_address:
+            raise forms.ValidationError(
+                "Asset Data and IP Address cannot be assigned at the same time"
+            )
+        if ip_address is not None:
+            if not ip_address.assigned_object:
+                raise forms.ValidationError(
+                    f"IP Address ({ip_address}) is not assigned to any object"
+                )
+            else:
+                parent = ip_address.assigned_object.parent_object
+                if parent is not None:
+                    asset_type = ContentType.objects.get_for_model(parent)
+                    asset_id = parent.id
+                    if models.VulnerabilityAssignment.objects.filter(asset_object_type=asset_type, asset_id=asset_id, vulnerability=vuln).exists():
+                        raise forms.ValidationError(
+                            f"Vulnerability {vuln} is already assigned to {ip_address} asset object {parent}"
+                        )
+        return cleaned_data
+    
+
+    class Meta:
+        model = models.VulnerabilityAssignment
+        fields = [
+            "asset_object_type",
+            "asset_id",
+            "vulnerability",
+            "ip_address",
+        ]
 
 
 # Risk Forms

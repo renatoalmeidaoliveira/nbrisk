@@ -21,6 +21,7 @@ class NbriskConfig(PluginConfig):
             "dcim.site",
         ],
         "additional_assets": [],
+        "proxies": {},
     }
 
 

@@ -41,7 +41,11 @@ urlpatterns = (
     # VulnerabilityAssignment URLs
     path("vulnerability-assignments/add/", views.VulnerabilityAssignmentEditView.as_view(), name="vulnerabilityassignment_add",),
     path("vulnerability-assignments/", views.VulnerabilityAssignmentListView.as_view(), name="vulnerabilityassignment_list",),
+    path("vulnerability-assignment/delete/", views.VulnerabilityAssignmentBulkDeleteView.as_view(), name="vulnerabilityassignment_bulk_delete",),
     path("vulnerability-assignments/<int:pk>/delete/", views.VulnerabilityAssignmentDeleteView.as_view(), name="vulnerabilityassignment_delete",),
+    path("vulnerability-assignments/<int:pk>/edit/", views.VulnerabilityAssignmentEditView.as_view(), name="vulnerabilityassignment_edit",),
+    path('vulnerability-assignments/<int:pk>/', include(get_model_urls(app_name, 'vulnerabilityassignment'))),
+    path('vulnerability-assignments/import/', views.VulnerabilityAssignmentImportView.as_view(), name='vulnerabilityassignment_import'),
     # Risk URLs
     path("risk/", views.RiskListView.as_view(), name="risk_list"),
     path("risk/add/", views.RiskEditView.as_view(), name="risk_add"),

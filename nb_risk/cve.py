@@ -1,7 +1,7 @@
 from dcim.models import Device, Site, DeviceType
 from tenancy.models import Tenant
 from virtualization.models import VirtualMachine
-
+from extras.plugins.utils import get_plugin_config
 from utilities.views import ViewTab, register_model_view
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
@@ -34,7 +34,6 @@ class VulnerabilitySearchView(ObjectPermissionRequiredMixin, View):
     def get(self, request, **kwargs):
 
         cves = get_cves(request)
-        print(cves)
         table = tables.CveTable(cves)
 
         return render(
@@ -49,9 +48,22 @@ class VulnerabilitySearchView(ObjectPermissionRequiredMixin, View):
         )
 
 
-def get_cves(request):
-    if request.GET.get("q") is not None:
-        query = request.GET.get("q")
+def get_query(request):
+    if request.GET.get("cpe") is not None:
+        return {
+            "URI" : "https://services.nvd.nist.gov/rest/json/cpes/2.0",
+            "payload":  {"cpeName": request.GET.get("cpe") } 
+        }
+    elif request.GET.get("cve") is not None:
+        return {
+            "URI" : "https://services.nvd.nist.gov/rest/json/cves/2.0",
+            "payload": { "cveId" : request.GET.get("cve") }
+        }
+    elif request.GET.get("keyword") is not None:
+        return {
+            "URI" : "https://services.nvd.nist.gov/rest/json/cves/2.0",
+            "payload": { "keywordSearch" : request.GET.get("keyword") }
+        }
     elif request.GET.get("device_type") is not None:
         device_type_id = request.GET.get("device_type")
         device_type = DeviceType.objects.get(id=device_type_id)
@@ -65,13 +77,20 @@ def get_cves(request):
         else:
             part = "h"
         query = f"cpe:2.3:{part}:{manufactor}:{product}:{version}:*:*:*:*:*:*:*"
-    else:
-        return []
+        return {
+            "URI" : "https://services.nvd.nist.gov/rest/json/cpes/2.0",
+            "payload": {"cpeName": f"{query}"}
+        }
+        
 
-    payload = {"cpeName": f"{query}"}
+def get_cves(request):
+    query = get_query(request)
+    if query is None:
+        return []
     try:
+        proxies = get_plugin_config("nb_risk", "proxies")
         r = requests.get(
-            "https://services.nvd.nist.gov/rest/json/cves/2.0/", params=payload
+            query["URI"], params=query["payload"], proxies=proxies
         )
         r.raise_for_status()
         output = []
@@ -90,6 +109,8 @@ def get_cves(request):
                             cve[attribute] = metrics[attribute]
                         else:
                             cve[attribute] = ""
+            return_url = f"{request.path}?{request.META['QUERY_STRING']}"
+            cve["return_url"] = return_url
             output.append(cve)
         return output
     except Exception as e:

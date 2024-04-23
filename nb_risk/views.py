@@ -218,6 +218,10 @@ class VulnerabilityAssignmentEditView(generic.ObjectEditView):
 class VulnerabilityAssignmentDeleteView(generic.ObjectDeleteView):
     queryset = models.VulnerabilityAssignment.objects.all()
 
+class VulnerabilityAssignmentBulkDeleteView(generic.BulkDeleteView):
+    queryset = models.VulnerabilityAssignment.objects.all()
+    table = tables.VulnerabilityExploitListTable
+
 class VulnerabilityAssignmentListView(generic.ObjectListView):
     queryset = models.VulnerabilityAssignment.objects.all()
     table = tables.VulnerabilityExploitListTable
@@ -225,6 +229,25 @@ class VulnerabilityAssignmentListView(generic.ObjectListView):
     filterset_form = forms.VulnerabilityAssignmentFilterForm
     actions = ('import', 'export', )
 
+class VulnerabilityAssignmentImportView(generic.BulkImportView):
+    queryset = models.VulnerabilityAssignment.objects.all()
+    model_form = forms.VulnerabilityAssignmentImportForm
+    table = tables.VulnerabilityExploitListTable
+
+    def save_object(self, object_form, request):
+        if object_form.cleaned_data["ip_address"] is not None:
+            ip_address = object_form.cleaned_data["ip_address"]
+            parent = ip_address.assigned_object.parent_object
+            vulnAssingment = models.VulnerabilityAssignment(
+                vulnerability=object_form.cleaned_data["vulnerability"],
+                asset = parent,
+            )
+            vulnAssingment.full_clean()
+            vulnAssingment.save()
+            return vulnAssingment                        
+
+
+        return object_form.save()
 # Risk Views
 
 
