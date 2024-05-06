@@ -19,12 +19,16 @@ To ensure NBRisk plugin is automatically re-installed during future upgrades, cr
 ```shell
 # echo "NbRisk==35.0.*" >> local_requirements.txt 
 ```
-### For NetBox 3.5.8 or grater
+### For NetBox 3.5.8 to 3.7.x
 ```shell
 # echo "NbRisk==35.1.*" >> local_requirements.txt 
 ```
-
-Once installed, the plugin needs to be enabled in your configuration.py
+### For NetBox 4.0.0 or grater
+```shell
+# echo "NbRisk==40.0.*" >> local_requirements.txt 
+```
+Before installing NBRisk make sure your NetBox instance is already installed with all migrations executed.
+With your NetBox fully installed, install the plugin with pip and enable it in your configuration.py
 
 ```python
 # In your configuration.py
