@@ -17,7 +17,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from . import forms, models, tables, filtersets
+from . import forms, models, tables, filtersets, custom_views
 
 # ThreatSource Views
 
@@ -33,7 +33,7 @@ class ThreatSourceListView(generic.ObjectListView):
     filterset_form = forms.ThreatSourceFilterForm
 
 
-class ThreatSourceEditView(generic.ObjectEditView):
+class ThreatSourceEditView(custom_views.GetReturnURLMixin, generic.ObjectEditView):
     queryset = models.ThreatSource.objects.all()
     form = forms.ThreatSourceForm
 
@@ -84,7 +84,7 @@ class ThreatEventListView(generic.ObjectListView):
     filterset_form = forms.ThreatEventFilterForm
 
 
-class ThreatEventEditView(generic.ObjectEditView):
+class ThreatEventEditView(custom_views.GetReturnURLMixin, generic.ObjectEditView):
     queryset = models.ThreatEvent.objects.all()
     form = forms.ThreatEventForm
 
@@ -126,7 +126,7 @@ class VulnerabilityListView(generic.ObjectListView):
     template_name = "nb_risk/vulnerability_list.html"
 
 
-class VulnerabilityEditView(generic.ObjectEditView):
+class VulnerabilityEditView(custom_views.GetReturnURLMixin, generic.ObjectEditView):
     queryset = models.Vulnerability.objects.all()
     form = forms.VulnerabilityForm
 
@@ -197,7 +197,7 @@ for supported_asset in supported_assets:
 # VulnerabilityAssignment Views
 
 
-class VulnerabilityAssignmentEditView(generic.ObjectEditView):
+class VulnerabilityAssignmentEditView(custom_views.GetReturnURLMixin, generic.ObjectEditView):
     queryset = models.VulnerabilityAssignment.objects.all()
     form = forms.VulnerabilityAssignmentForm
     template_name = "nb_risk/generic_vulnerability_assignment_edit.html"
@@ -277,7 +277,7 @@ class RiskView(generic.ObjectView):
     queryset = models.Risk.objects.all()
 
 
-class RiskEditView(generic.ObjectEditView):
+class RiskEditView(custom_views.GetReturnURLMixin, generic.ObjectEditView):
     queryset = models.Risk.objects.all()
     form = forms.RiskForm
 
@@ -346,7 +346,7 @@ class ControlAssetsView(generic.ObjectChildrenView):
             childrens = _get_assets(parent)
             return childrens
 
-class ControlEditView(generic.ObjectEditView):
+class ControlEditView(custom_views.GetReturnURLMixin, generic.ObjectEditView):
     queryset = models.Control.objects.all()
     form = forms.ControlForm
 
