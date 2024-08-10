@@ -83,6 +83,20 @@ class VulnerabilityAssignmentListTable(NetBoxTable):
         model = models.VulnerabilityAssignment
         fields = ["asset", "asset_object_type"]
 
+class VulnerabilityAssignmentListViewTable(NetBoxTable):
+    
+        actions = columns.ActionsColumn(actions=("delete",))
+
+        vulnerability = tables.Column(linkify=True)
+    
+        asset = tables.Column(linkify=True)
+    
+        asset_object_type = tables.Column(verbose_name="Asset Type")
+    
+        class Meta(NetBoxTable.Meta):
+            model = models.VulnerabilityAssignment
+            fields = ["asset", "asset_object_type", "vulnerability", "vulnerability__cve", ]
+            default_columns = ('pk', 'asset', "vulnerability")
 
 class VulnerabilityExploitListTable(NetBoxTable):
 

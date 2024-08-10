@@ -232,9 +232,14 @@ class VulnerabilityAssignmentBulkDeleteView(generic.BulkDeleteView):
 
 class VulnerabilityAssignmentListView(generic.ObjectListView):
     queryset = models.VulnerabilityAssignment.objects.all()
-    table = tables.VulnerabilityExploitListTable
+    table = tables.VulnerabilityAssignmentListViewTable
     filterset = filtersets.VulnerabilityAssignmentFilterSet
     filterset_form = forms.VulnerabilityAssignmentFilterForm
+    actions = {
+        'import': {'add'},
+        'export': {'view'},
+        'bulk_delete': {'delete'},
+    }
 
 class VulnerabilityAssignmentImportView(generic.BulkImportView):
     queryset = models.VulnerabilityAssignment.objects.all()

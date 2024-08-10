@@ -58,6 +58,16 @@ class VulnerabilityFilterSet(NetBoxModelFilterSet):
 
 
 class VulnerabilityAssignmentFilterSet(NetBoxModelFilterSet):
+    
+    def search(self, queryset, name, value):
+        if not value.strip():
+            return queryset
+        qs_filter = (
+            Q(vulnerability__name__icontains=value) 
+            | Q(vulnerability__cve__icontains=value)
+        )
+        return queryset.filter(qs_filter)
+
     class Meta:
         model = models.VulnerabilityAssignment
         fields = ["vulnerability"]

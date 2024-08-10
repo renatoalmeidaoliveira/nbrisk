@@ -204,9 +204,12 @@ class VulnerabilityAssignmentForm(forms.ModelForm):
 
 class VulnerabilityAssignmentFilterForm(NetBoxModelFilterSetForm):
     model = models.VulnerabilityAssignment
+    vulnerability = DynamicModelChoiceField(
+        queryset=models.Vulnerability.objects.all(),
+        required=False,
+    )
 
-    class Meta:
-        fields = ["vulnerability"]
+    
 
 class VulnerabilityAssignmentImportForm(NetBoxModelImportForm):
     vulnerability = CSVModelChoiceField(
