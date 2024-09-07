@@ -102,7 +102,7 @@ class VulnerabilityAssignmentSerializer(NetBoxModelSerializer):
     asset = serializers.SerializerMethodField('get_asset')
     vulnerability = serializers.SlugRelatedField(slug_field="name", queryset=models.Vulnerability.objects.all())
 
-    asset_id = serializers.IntegerField(source='asset.id')
+    asset_id = serializers.IntegerField(source='asset.id', write_only=True)
 
     def validate(self, data):
         asset_id = data['asset']['id']
@@ -117,7 +117,7 @@ class VulnerabilityAssignmentSerializer(NetBoxModelSerializer):
         serializer = get_serializer_for_model(obj.asset, prefix='Nested')
         context = {'request': self.context['request']}
         return serializer(obj.asset, context=context).data
-
+    
     def get_display(self, obj):
         return obj.name
 

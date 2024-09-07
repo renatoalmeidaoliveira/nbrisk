@@ -24,5 +24,9 @@ class NbriskConfig(PluginConfig):
         "additional_assets": [],
         "proxies": {},
     }
+    
+    def ready(self):
+        from . import signals
+        super().ready()
 
 config = NbriskConfig  # noqa

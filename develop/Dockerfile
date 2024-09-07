@@ -20,6 +20,7 @@ RUN git clone --single-branch --branch ${netbox_ver} https://github.com/netbox-c
 # Work around https://github.com/pallets/markupsafe/issues/284
 RUN pip install markupsafe==2.0.1
 RUN pip install git+https://github.com/python/tzdata
+RUN pip install tblib
 
 # -------------------------------------------------------------------------------------
 # Install Netbox Plugin

@@ -116,7 +116,7 @@ class VulnerabilityAssignment(NetBoxModel):
 
     def __str__(self):
         return f"{self.asset} - {self.vulnerability.name}"
-
+   
     class Meta:
         constraints = (
             models.UniqueConstraint(
