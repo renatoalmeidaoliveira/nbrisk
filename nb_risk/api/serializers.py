@@ -1,14 +1,11 @@
 from rest_framework import serializers
 from django.contrib.contenttypes.models import ContentType
 from netbox.api.fields import ChoiceField, ContentTypeField, SerializedPKRelatedField
-from netbox.api.serializers import WritableNestedSerializer
 from utilities.api import get_serializer_for_model
 
 
 from netbox.api.serializers import NetBoxModelSerializer
-from nb_risk.api.nested_serializers import (
-    NestedRiskSerializer,
-)
+
 from .. import models, choices
 
 # ThreatSource Serializers
@@ -114,9 +111,9 @@ class VulnerabilityAssignmentSerializer(NetBoxModelSerializer):
     def get_asset(self, obj):
         if obj.asset is None:
             return None
-        serializer = get_serializer_for_model(obj.asset, prefix='Nested')
+        serializer = get_serializer_for_model(obj.asset)
         context = {'request': self.context['request']}
-        return serializer(obj.asset, context=context).data
+        return serializer(obj.asset, context=context, nested=True).data
     
     def get_display(self, obj):
         return obj.name
@@ -165,7 +162,7 @@ class RiskSerializer(NetBoxModelSerializer):
 class ControlSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:control-detail")
     display = serializers.SerializerMethodField('get_display')
-    risk = NestedRiskSerializer(many=True,required=False, allow_null=True)
+    risk = RiskSerializer(many=True,required=False, allow_null=True, nested=True)
 
     def get_display(self, obj):
         return obj.name
