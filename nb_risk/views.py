@@ -2,6 +2,7 @@ from django.core.exceptions import MultipleObjectsReturned, ValidationError, Obj
 from django.contrib.contenttypes.models import ContentType
 
 from netbox.views import generic
+from netbox.object_actions import AddObject, BulkDelete, BulkExport, BulkImport
 from dcim.models import Device, Site
 from tenancy.models import Tenant
 from virtualization.models import VirtualMachine
@@ -235,11 +236,7 @@ class VulnerabilityAssignmentListView(generic.ObjectListView):
     table = tables.VulnerabilityAssignmentListViewTable
     filterset = filtersets.VulnerabilityAssignmentFilterSet
     filterset_form = forms.VulnerabilityAssignmentFilterForm
-    actions = {
-        'import': {'add'},
-        'export': {'view'},
-        'bulk_delete': {'delete'},
-    }
+    actions = (BulkImport, BulkExport, BulkDelete)
 
 class VulnerabilityAssignmentImportView(generic.BulkImportView):
     queryset = models.VulnerabilityAssignment.objects.all()
