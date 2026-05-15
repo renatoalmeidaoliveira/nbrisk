@@ -1,14 +1,11 @@
 from netbox.plugins import PluginTemplateExtension
 from netbox.plugins.utils import get_plugin_config
-from django.conf import settings
-from packaging import version
-
-NETBOX_CURRENT_VERSION = version.parse(settings.VERSION)
 
 
 def create_button(model_name):
     class Button(PluginTemplateExtension):
-        model = model_name
+        # NetBox 4.3+ requires `models` (list) instead of the deprecated singular `model`
+        models = [model_name]
 
         def buttons(self):
             return self.render("nb_risk/vulnerability_assignment_button.html")
