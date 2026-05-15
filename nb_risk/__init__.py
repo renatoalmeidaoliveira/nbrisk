@@ -6,8 +6,8 @@ from .version import __version__
 class NbriskConfig(PluginConfig):
     name = "nb_risk"
     base_url = "nb_risk"
-    verbose_name = "Risk Management"
-    description = "NIST 800-30 Risk Management for Netbox"
+    verbose_name = "Netbox Risk"
+    description = "Risk Management for NetBox, inspired by NIST 800-30."
     version = __version__
     author = "Blake Parker"
     author_email = "blake.parker@e280.com"
