@@ -33,32 +33,6 @@ cd /opt/netbox/netbox
 python3 manage.py migrate nb_risk
 ```
 
-### Installing from PyPI (upstream — NetBox 4.1.x and earlier)
-
-```shell
-# NetBox 4.1.x
-echo "NbRisk==41.0.*" >> local_requirements.txt
-
-# NetBox 4.0.x
-echo "NbRisk==40.0.*" >> local_requirements.txt
-
-# NetBox 3.5.8 to 3.7.x
-echo "NbRisk==35.1.*" >> local_requirements.txt
-
-# NetBox 3.5.0 to 3.5.7
-echo "NbRisk==35.0.*" >> local_requirements.txt
-
-# NetBox 3.4.x
-echo "NbRisk==34.*" >> local_requirements.txt
-```
-
-```shell
-source /opt/netbox/venv/bin/activate
-pip install NbRisk
-cd /opt/netbox/netbox
-python3 manage.py migrate nb_risk
-```
-
 ## Enabling the Plugin
 
 Add the plugin to your `configuration.py`:
