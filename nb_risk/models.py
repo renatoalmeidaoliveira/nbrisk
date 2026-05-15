@@ -122,6 +122,7 @@ class VulnerabilityAssignment(NetBoxModel):
         return f"{self.asset} - {self.vulnerability.name}"
    
     class Meta:
+        ordering = ('pk',)
         constraints = (
             models.UniqueConstraint(
                 fields=("asset_object_type", "asset_id", "vulnerability"),
