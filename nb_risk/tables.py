@@ -135,17 +135,22 @@ class CveTable(NetBoxTable):
 
     id = tables.Column(attrs={"td": {"class": "text-end text-nowrap"}})
     description = tables.Column()
-    accessVector = tables.Column(verbose_name="Access Vector")
+    baseScore = tables.Column(verbose_name="Base Score")
+    cvssVersion = tables.Column(verbose_name="CVSS Version")
+    accessVector = tables.Column(verbose_name="Attack Vector")
 
     create = riskColumns.CreateColumn(empty_values=())
 
     class Meta(NetBoxTable.Meta):
         model = models.Vulnerability
-        fields = ["id",
-                  "description",
-                  "accessVector", 
-                  "create"
-                  ]
+        fields = [
+            "id",
+            "description",
+            "cvssVersion",
+            "baseScore",
+            "accessVector",
+            "create",
+        ]
 
 
 # Control Tables

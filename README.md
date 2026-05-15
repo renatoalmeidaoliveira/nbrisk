@@ -42,6 +42,36 @@ PLUGINS = ["nb_risk"]
 
 ## Configuration
 
+All configuration goes in the `PLUGINS_CONFIG` section of `configuration.py`:
+
+```python
+PLUGINS_CONFIG = {
+    'nb_risk': {
+        # NVD API key — strongly recommended to avoid rate limiting (5 req/30s without, 50/30s with)
+        # Get a free key at https://nvd.nist.gov/developers/request-an-api-key
+        'nvd_api_key': 'your-api-key-here',
+
+        # Optional proxy settings for NVD API requests
+        'proxies': {
+            'http': 'http://proxy.example.com:8080',
+            'https': 'http://proxy.example.com:8080',
+        },
+
+        # Additional models to support vulnerability assignment beyond the defaults
+        # Defaults: dcim.device, virtualization.virtualmachine, tenancy.tenant, dcim.site
+        'additional_assets': [
+            'dcim.platform',
+        ],
+    },
+}
+```
+
+### NVD API Key
+
+The CVE search feature queries the [NIST NVD API](https://nvd.nist.gov/developers/vulnerabilities). Without an API key requests are rate-limited to 5 per 30 seconds; with a key the limit is 50 per 30 seconds. A free key can be requested at [nvd.nist.gov/developers/request-an-api-key](https://nvd.nist.gov/developers/request-an-api-key).
+
+### Additional Assets
+
 To assign vulnerabilities to additional models beyond the defaults (`dcim.device`, `virtualization.virtualmachine`, `tenancy.tenant`, `dcim.site`), add them via `additional_assets` in `PLUGINS_CONFIG`:
 
 ```python

@@ -23,6 +23,7 @@ class NbriskConfig(PluginConfig):
         ],
         "additional_assets": [],
         "proxies": {},
+        "nvd_api_key": None,
     }
     
     def ready(self):

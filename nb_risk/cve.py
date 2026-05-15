@@ -20,6 +20,10 @@ logger = logging.getLogger(__name__)
 
 from . import forms, models, tables
 
+NVD_CVE_URI = "https://services.nvd.nist.gov/rest/json/cves/2.0"
+NVD_CPE_URI = "https://services.nvd.nist.gov/rest/json/cpes/2.0"
+
+
 # Vulnerability Search Views
 
 
@@ -33,7 +37,6 @@ class VulnerabilitySearchView(ObjectPermissionRequiredMixin, View):
         return get_permission_for_model(self.queryset.model, "view")
 
     def get(self, request, **kwargs):
-
         cves = get_cves(request)
         table = tables.CveTable(cves)
 
@@ -48,71 +51,214 @@ class VulnerabilitySearchView(ObjectPermissionRequiredMixin, View):
             },
         )
 
+
+def _get_nvd_headers():
+    """Return headers for NVD API requests, including API key if configured."""
+    api_key = get_plugin_config("nb_risk", "nvd_api_key")
+    headers = {}
+    if api_key:
+        headers["apiKey"] = api_key
+    return headers
+
+
 def get_query(request):
     if request.GET.get("cpe") is not None:
         return {
-            "URI" : "https://services.nvd.nist.gov/rest/json/cpes/2.0",
-            "payload":  {"cpeName": request.GET.get("cpe") } 
+            "URI": NVD_CPE_URI,
+            "payload": {"cpeName": request.GET.get("cpe")},
+            "type": "cpe",
         }
     elif request.GET.get("cve") is not None:
         return {
-            "URI" : "https://services.nvd.nist.gov/rest/json/cves/2.0",
-            "payload": { "cveId" : request.GET.get("cve") }
+            "URI": NVD_CVE_URI,
+            "payload": {"cveId": request.GET.get("cve")},
+            "type": "cve",
         }
     elif request.GET.get("keyword") is not None:
         return {
-            "URI" : "https://services.nvd.nist.gov/rest/json/cves/2.0",
-            "payload": { "keywordSearch" : request.GET.get("keyword") }
+            "URI": NVD_CVE_URI,
+            "payload": {"keywordSearch": request.GET.get("keyword")},
+            "type": "cve",
         }
     elif request.GET.get("device_type") is not None:
         device_type_id = request.GET.get("device_type")
         device_type = DeviceType.objects.get(id=device_type_id)
-        manufactor = device_type.manufacturer.name
+        manufacturer = device_type.manufacturer.name
         product = device_type.model
-        version = request.GET.get("version")
-        if version is None:
-            version = "-"
-        if request.GET.get("part") is not None:
-            part = request.GET.get("part")
-        else:
-            part = "h"
-        query = f"cpe:2.3:{part}:{manufactor}:{product}:{version}:*:*:*:*:*:*:*"
+        version = request.GET.get("version") or "-"
+        part = request.GET.get("part") or "h"
+        cpe_string = f"cpe:2.3:{part}:{manufacturer}:{product}:{version}:*:*:*:*:*:*:*"
+        # Search CVEs by CPE name rather than the CPE registry
         return {
-            "URI" : "https://services.nvd.nist.gov/rest/json/cpes/2.0",
-            "payload": {"cpeName": f"{query}"}
+            "URI": NVD_CVE_URI,
+            "payload": {"cpeName": cpe_string},
+            "type": "cve",
         }
-        
+    return None
+
+
+def _parse_cvss(cve_entry):
+    """
+    Extract CVSS metrics from a CVE entry, preferring CVSSv2 for field
+    compatibility with the Vulnerability model, but falling back to
+    CVSSv3.x and CVSSv4.0 base scores when v2 data is absent.
+    """
+    metrics = cve_entry.get("metrics", {})
+    result = {
+        "accessVector": "",
+        "accessComplexity": "",
+        "authentication": "",
+        "confidentialityImpact": "",
+        "integrityImpact": "",
+        "availabilityImpact": "",
+        "baseScore": "",
+        "cvssVersion": "",
+    }
+
+    # CVSSv2 — full field mapping
+    if "cvssMetricV2" in metrics:
+        data = metrics["cvssMetricV2"][0]["cvssData"]
+        result.update({
+            "accessVector": data.get("accessVector", ""),
+            "accessComplexity": data.get("accessComplexity", ""),
+            "authentication": data.get("authentication", ""),
+            "confidentialityImpact": data.get("confidentialityImpact", ""),
+            "integrityImpact": data.get("integrityImpact", ""),
+            "availabilityImpact": data.get("availabilityImpact", ""),
+            "baseScore": data.get("baseScore", ""),
+            "cvssVersion": "2.0",
+        })
+        return result
+
+    # CVSSv3.1 — partial mapping (no authentication field in v3)
+    if "cvssMetricV31" in metrics:
+        data = metrics["cvssMetricV31"][0]["cvssData"]
+        result.update({
+            "accessVector": data.get("attackVector", ""),
+            "accessComplexity": data.get("attackComplexity", ""),
+            "authentication": "",  # not present in v3
+            "confidentialityImpact": data.get("confidentialityImpact", ""),
+            "integrityImpact": data.get("integrityImpact", ""),
+            "availabilityImpact": data.get("availabilityImpact", ""),
+            "baseScore": data.get("baseScore", ""),
+            "cvssVersion": "3.1",
+        })
+        return result
+
+    # CVSSv3.0
+    if "cvssMetricV30" in metrics:
+        data = metrics["cvssMetricV30"][0]["cvssData"]
+        result.update({
+            "accessVector": data.get("attackVector", ""),
+            "accessComplexity": data.get("attackComplexity", ""),
+            "authentication": "",
+            "confidentialityImpact": data.get("confidentialityImpact", ""),
+            "integrityImpact": data.get("integrityImpact", ""),
+            "availabilityImpact": data.get("availabilityImpact", ""),
+            "baseScore": data.get("baseScore", ""),
+            "cvssVersion": "3.0",
+        })
+        return result
+
+    # CVSSv4.0 — base score only, field names differ significantly
+    if "cvssMetricV40" in metrics:
+        data = metrics["cvssMetricV40"][0]["cvssData"]
+        result.update({
+            "accessVector": data.get("attackVector", ""),
+            "accessComplexity": data.get("attackComplexity", ""),
+            "confidentialityImpact": data.get("vulnConfidentialityImpact", ""),
+            "integrityImpact": data.get("vulnIntegrityImpact", ""),
+            "availabilityImpact": data.get("vulnAvailabilityImpact", ""),
+            "baseScore": data.get("baseScore", ""),
+            "cvssVersion": "4.0",
+        })
+        return result
+
+    return result
+
+
+def _parse_cve_entries(entries, return_url):
+    """Parse a list of NVD CVE vulnerability entries into table-ready dicts."""
+    output = []
+    for entry in entries:
+        cve_data = entry.get("cve", {})
+        cve_id = cve_data.get("id", "")
+
+        description = ""
+        for desc in cve_data.get("descriptions", []):
+            if desc.get("lang") == "en":
+                description = desc["value"]
+                break
+
+        cvss = _parse_cvss(cve_data)
+
+        output.append({
+            "id": cve_id,
+            "description": description,
+            "return_url": return_url,
+            **cvss,
+        })
+    return output
+
+
+def _parse_cpe_entries(entries, return_url):
+    """
+    Parse NVD CPE entries. The CPE endpoint returns products, not CVEs.
+    For each CPE found, perform a follow-up CVE lookup by cpeName so
+    the results table still shows CVEs.
+    """
+    proxies = get_plugin_config("nb_risk", "proxies")
+    headers = _get_nvd_headers()
+    output = []
+
+    for entry in entries:
+        cpe_name = entry.get("cpe", {}).get("cpeName", "")
+        if not cpe_name:
+            continue
+        try:
+            r = requests.get(
+                NVD_CVE_URI,
+                params={"cpeName": cpe_name},
+                headers=headers,
+                proxies=proxies,
+                timeout=15,
+            )
+            r.raise_for_status()
+            vulns = r.json().get("vulnerabilities", [])
+            output.extend(_parse_cve_entries(vulns, return_url))
+        except Exception as e:
+            logger.warning("CVE lookup for CPE %s failed: %s", cpe_name, e)
+
+    return output
+
 
 def get_cves(request):
     query = get_query(request)
     if query is None:
         return []
+
     try:
         proxies = get_plugin_config("nb_risk", "proxies")
+        headers = _get_nvd_headers()
+        return_url = f"{request.path}?{request.META['QUERY_STRING']}"
+
         r = requests.get(
-            query["URI"], params=query["payload"], proxies=proxies
+            query["URI"],
+            params=query["payload"],
+            headers=headers,
+            proxies=proxies,
+            timeout=15,
         )
         r.raise_for_status()
-        output = []
-        for entry in r.json()["vulnerabilities"]:
-            cve = {"id": entry["cve"]["id"]}
-            for description in entry["cve"]["descriptions"]:
-                if description["lang"] == "en":
-                    cve["description"] = description["value"]
-                    break
-            for metric in entry["cve"]["metrics"]:
-                if metric == "cvssMetricV2":
-                    metrics = entry["cve"]["metrics"][metric][0]["cvssData"]
-                    attributes = ['accessVector', 'accessComplexity', 'authentication', 'confidentialityImpact', 'integrityImpact', 'availabilityImpact', 'baseScore']
-                    for attribute in attributes:
-                        if attribute in metrics:
-                            cve[attribute] = metrics[attribute]
-                        else:
-                            cve[attribute] = ""
-            return_url = f"{request.path}?{request.META['QUERY_STRING']}"
-            cve["return_url"] = return_url
-            output.append(cve)
-        return output
+        data = r.json()
+
+        if query["type"] == "cpe":
+            entries = data.get("products", [])
+            return _parse_cpe_entries(entries, return_url)
+        else:
+            entries = data.get("vulnerabilities", [])
+            return _parse_cve_entries(entries, return_url)
+
     except Exception as e:
-        print(e)
+        logger.error("NVD API request failed: %s", e)
         return []
