@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from netbox.api.fields import ChoiceField, ContentTypeField, GFKSerializerField
+from netbox.api.fields import ChoiceField, ContentTypeField
+from netbox.api.gfk_fields import GFKSerializerField
 from netbox.api.serializers import NetBoxModelSerializer
 from core.models import ObjectType
 
