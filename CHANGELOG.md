@@ -1,5 +1,17 @@
 # Changelog
 
+## 45.1.0 (15/05/2026)
+
+* Add `nvd_api_key` to plugin config — passed as `apiKey` header to raise NVD rate limit from 5 to 50 requests/30s
+* Fix CPE search — `/cpes/2.0` returns products, not CVEs; now performs follow-up CVE lookup per CPE result
+* Fix device type search — now queries `/cves/2.0?cpeName=...` directly instead of the CPE registry
+* Add CVSSv3.1, CVSSv3.0, and CVSSv4.0 fallback score parsing; previously only CVSSv2 was read
+* Add `CVSS Version` and `Base Score` columns to CVE search results table
+* Import button now correctly pre-populates all CVSS fields regardless of score version
+* Add 15-second timeout to all NVD API requests
+* Update CI release workflow to trigger on published release instead of tag push (prevents overwriting release notes)
+* Update README with full `PLUGINS_CONFIG` example and NVD API key documentation
+
 ## 45.0.0 (15/05/2026)
 
 > Maintained by [@droolingtaz](https://github.com/droolingtaz). The original upstream repository is no longer actively maintained. This release adds full compatibility with NetBox 4.5.x and Python 3.12+.
