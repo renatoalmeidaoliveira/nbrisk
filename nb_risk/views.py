@@ -5,7 +5,7 @@ from netbox.views import generic
 from dcim.models import Device, Site
 from tenancy.models import Tenant
 from virtualization.models import VirtualMachine
-from core.models import ObjectType as ContentType
+from core.models import ObjectType
 from ipam.models import IPAddress
 
 from netbox.plugins.utils import get_plugin_config

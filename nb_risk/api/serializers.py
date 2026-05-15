@@ -1,10 +1,7 @@
 from rest_framework import serializers
-from django.contrib.contenttypes.models import ContentType
-from netbox.api.fields import ChoiceField, ContentTypeField, SerializedPKRelatedField
-from utilities.api import get_serializer_for_model
-
-
+from netbox.api.fields import ChoiceField, ContentTypeField, GFKSerializerField
 from netbox.api.serializers import NetBoxModelSerializer
+from core.models import ObjectType
 
 from .. import models, choices
 
@@ -43,7 +40,6 @@ class ThreatEventSerializer(NetBoxModelSerializer):
     relevance = ChoiceField(choices=choices.RelevanceChoices)
     likelihood = ChoiceField(choices=choices.LikelihoodChoices)
 
-
     def get_display(self, obj):
         return obj.name
 
@@ -60,13 +56,11 @@ class ThreatEventSerializer(NetBoxModelSerializer):
             "impact",
             "vulnerability",
         ]
-
         brief_fields = ['id', 'url', 'display', 'name', 'description']
 
 # Vulnerability Serializers
 
 class VulnerabilitySerializer(NetBoxModelSerializer):
-    
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:vulnerability-detail")
     display = serializers.SerializerMethodField('get_display')
 
@@ -83,7 +77,6 @@ class VulnerabilitySerializer(NetBoxModelSerializer):
             "cve",
             "description",
         ]
-
         brief_fields = ['id', 'url', 'display', 'name', 'description']
 
 
@@ -92,32 +85,31 @@ class VulnerabilitySerializer(NetBoxModelSerializer):
 class VulnerabilityAssignmentSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:vulnerabilityassignment-detail")
     display = serializers.SerializerMethodField('get_display')
+
+    # Use ObjectType (NetBox wrapper) filtered via the AssetTypes Q object for the content type field.
+    # Pass the Q object correctly as a positional filter argument.
     asset_object_type = ContentTypeField(
-        queryset=ContentType.objects.filter(choices.AssetTypes),
+        queryset=ObjectType.objects.filter(choices.AssetTypes),
         required=True,
     )
-    asset = serializers.SerializerMethodField('get_asset')
+
+    # GFKSerializerField replaces the manual get_serializer_for_model() pattern (NetBox 4.5+)
+    asset = GFKSerializerField(read_only=True)
+
     vulnerability = serializers.SlugRelatedField(slug_field="name", queryset=models.Vulnerability.objects.all())
 
-    asset_id = serializers.IntegerField(source='asset.id', write_only=True)
+    asset_id = serializers.IntegerField(write_only=True)
 
     def validate(self, data):
-        asset_id = data['asset']['id']
-        asset_object_type = data['asset_object_type']
-        asset = asset_object_type.get_object_for_this_type(id=asset_id)
-        data['asset'] = asset
+        asset_id = data.get('asset_id')
+        asset_object_type = data.get('asset_object_type')
+        if asset_id and asset_object_type:
+            asset = asset_object_type.get_object_for_this_type(id=asset_id)
+            data['asset_id'] = asset.pk
         return super().validate(data)
 
-    def get_asset(self, obj):
-        if obj.asset is None:
-            return None
-        serializer = get_serializer_for_model(obj.asset)
-        context = {'request': self.context['request']}
-        return serializer(obj.asset, context=context, nested=True).data
-    
     def get_display(self, obj):
         return obj.name
-
 
     class Meta:
         model = models.VulnerabilityAssignment
@@ -137,10 +129,8 @@ class VulnerabilityAssignmentSerializer(NetBoxModelSerializer):
 class RiskSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:risk-detail")
     display = serializers.SerializerMethodField('get_display')
-    
     threat_event = serializers.SlugRelatedField(slug_field="name", queryset=models.ThreatEvent.objects.all())
 
-   
     def get_display(self, obj):
         return obj.name
 
@@ -162,11 +152,11 @@ class RiskSerializer(NetBoxModelSerializer):
 class ControlSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:control-detail")
     display = serializers.SerializerMethodField('get_display')
-    risk = RiskSerializer(many=True,required=False, allow_null=True, nested=True)
+    risk = RiskSerializer(many=True, required=False, allow_null=True, nested=True)
 
     def get_display(self, obj):
         return obj.name
-    
+
     class Meta:
         model = models.Control
         fields = [
@@ -176,5 +166,5 @@ class ControlSerializer(NetBoxModelSerializer):
             "name",
             "description",
             "notes",
-            "risk"
+            "risk",
         ]
