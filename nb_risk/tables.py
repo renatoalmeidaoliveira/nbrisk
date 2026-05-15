@@ -1,6 +1,8 @@
 import django_tables2 as tables
+from django_tables2.utils import Accessor
 
-from netbox.tables import NetBoxTable, ChoiceFieldColumn, columns
+from netbox.tables import NetBoxTable, columns
+from django.db.models import Count
 
 from . import models
 from . import columns as riskColumns
@@ -35,11 +37,25 @@ class ThreatEventTable(NetBoxTable):
 class VulnerabilityTable(NetBoxTable):
 
     name = tables.Column(linkify=True)
-    affected_assets = tables.Column(verbose_name="Affected Assets")
+    affected = columns.LinkedCountColumn(
+        verbose_name="Affected Assets",
+        accessor=Accessor("affected_assets"),
+        viewname='plugins:nb_risk:vulnerabilityassignment_list',
+        url_params={
+            'vulnerability': 'name',
+        },
+    )
+
+    def order_affected(self, queryset, is_descending):
+        if is_descending:
+            queryset = queryset.annotate(affected_assets=Count('vulnerability_assignments')).order_by('-affected_assets')
+        else:
+            queryset = queryset.annotate(affected_assets=Count('vulnerability_assignments')).order_by('affected_assets')
+        return (queryset, True)
 
     class Meta(NetBoxTable.Meta):
         model = models.Vulnerability
-        fields = ["name", "cve", "description", "affected_assets", "cvssbaseScore"]
+        fields = ["name", "cve", "description", "affected", "cvssbaseScore"]
 
 
 # VulnerabilityAssignment Tables
@@ -67,10 +83,23 @@ class VulnerabilityAssignmentListTable(NetBoxTable):
         model = models.VulnerabilityAssignment
         fields = ["asset", "asset_object_type"]
 
+class VulnerabilityAssignmentListViewTable(NetBoxTable):
+    
+        actions = columns.ActionsColumn(actions=("delete",))
+
+        vulnerability = tables.Column(linkify=True)
+    
+        asset = tables.Column(linkify=True)
+    
+        asset_object_type = tables.Column(verbose_name="Asset Type")
+    
+        class Meta(NetBoxTable.Meta):
+            model = models.VulnerabilityAssignment
+            fields = ["asset", "asset_object_type", "vulnerability", "vulnerability__cve", ]
+            default_columns = ('pk', 'asset', "vulnerability")
 
 class VulnerabilityExploitListTable(NetBoxTable):
 
-    actions = columns.ActionsColumn(actions=("delete",))
 
     asset = tables.Column(linkify=True)
 
@@ -102,24 +131,22 @@ class RiskTable(NetBoxTable):
 # CVE Tables
 
 
-class CveTable(tables.Table):
+class CveTable(NetBoxTable):
 
     id = tables.Column(attrs={"td": {"class": "text-end text-nowrap"}})
     description = tables.Column()
     accessVector = tables.Column(verbose_name="Access Vector")
-    accessComplexity = tables.Column(verbose_name="Access Complexity")
-    authentication = tables.Column(verbose_name="Authentication")
-    confidentialityImpact = tables.Column(verbose_name="Confidentiality Impact")
-    integrityImpact = tables.Column(verbose_name="Integrity Impact")
-    availabilityImpact = tables.Column(verbose_name="Availability Impact")
-    baseScore = tables.Column(verbose_name="Base Score")
 
     create = riskColumns.CreateColumn(empty_values=())
 
-    class Meta:
-        attrs = {
-            "class": "table table-hover object-list",
-        }
+    class Meta(NetBoxTable.Meta):
+        model = models.Vulnerability
+        fields = ["id",
+                  "description",
+                  "accessVector", 
+                  "create"
+                  ]
+
 
 # Control Tables
 

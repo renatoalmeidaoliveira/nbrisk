@@ -1,59 +1,76 @@
-## Netbox Nbrisk
-[Netbox](https://github.com/netbox-community/netbox) Plugin inspired in NIST 800-30 Risk Management  **BETA VERSION**
+## Netbox NBRisk
+[NetBox](https://github.com/netbox-community/netbox) plugin inspired by NIST 800-30 Risk Management.
 
+> **Note:** The original upstream repository is no longer actively maintained. This fork adds compatibility with NetBox 4.5.x and requires Python 3.12+.
 
 ## Compatibility
 
-This plugin in compatible with [NetBox](https://netbox.readthedocs.org/) 3.4.0 and later.
+| NBRisk Branch | NetBox Version | Python |
+|---|---|---|
+| `NetBox_v4.1` (this fork) | 4.5.x | 3.12+ |
+| `NetBox_v4.1` (upstream) | 4.1.x | 3.10+ |
+| upstream | 4.0.x | 3.10+ |
+| upstream | 3.5.8 – 3.7.x | 3.8+ |
+| upstream | 3.5.0 – 3.5.7 | 3.8+ |
+| upstream | 3.4.x | 3.8+ |
 
 ## Installation
 
-The plugin is available as a Python package and can be installed with pip.
-To ensure NBRisk plugin is automatically re-installed during future upgrades, create a file named local_requirements.txt (if not already existing) in the NetBox root directory (alongside requirements.txt) and list the NBRisk package:
+### Installing from this fork (NetBox 4.5.x)
 
-### For NetBox 3.4.x
+The recommended approach is to install directly from this fork's `NetBox_v4.1` branch. To ensure the plugin is automatically re-installed during future NetBox upgrades, add it to your `local_requirements.txt`:
+
 ```shell
-# echo "NbRisk==^34.0.0" >> local_requirements.txt 
+echo "git+https://github.com/droolingtaz/nbrisk.git@NetBox_v4.1#egg=NbRisk" >> /opt/netbox/local_requirements.txt
 ```
-### For NetBox 3.5.x
+
+Then install and migrate:
+
 ```shell
-# echo "NbRisk==^35.0.0" >> local_requirements.txt 
-```
-
-Once installed, the plugin needs to be enabled in your configuration.py
-
-```python
-# In your configuration.py
-PLUGINS = ["nb_risk"]
-```
-
-First run
-```
 source /opt/netbox/venv/bin/activate
-```
-to enter the Python virtual environment.
-
-Then run
-```
+pip install "git+https://github.com/droolingtaz/nbrisk.git@NetBox_v4.1#egg=NbRisk"
 cd /opt/netbox/netbox
-pip install NbRisk
 python3 manage.py migrate nb_risk
 ```
 
+### Installing from PyPI (upstream — NetBox 4.1.x and earlier)
+
+```shell
+# NetBox 4.1.x
+echo "NbRisk==41.0.*" >> local_requirements.txt
+
+# NetBox 4.0.x
+echo "NbRisk==40.0.*" >> local_requirements.txt
+
+# NetBox 3.5.8 to 3.7.x
+echo "NbRisk==35.1.*" >> local_requirements.txt
+
+# NetBox 3.5.0 to 3.5.7
+echo "NbRisk==35.0.*" >> local_requirements.txt
+
+# NetBox 3.4.x
+echo "NbRisk==34.*" >> local_requirements.txt
+```
+
+```shell
+source /opt/netbox/venv/bin/activate
+pip install NbRisk
+cd /opt/netbox/netbox
+python3 manage.py migrate nb_risk
+```
+
+## Enabling the Plugin
+
+Add the plugin to your `configuration.py`:
+
+```python
+PLUGINS = ["nb_risk"]
+```
 
 ## Configuration
 
-To assign vulnerabilities to a specific model in NB Risk, you can add the following code to the `PLUGINS_CONFIG` section of your `netbox/configuration.py` file, using the `additional_assets` parameter:
-```python
-PLUGINS_CONFIG = {
-    'nb_risk': {
-        'additional_assets': [
-            'app_label.model_name',
-        ],
-    },
-}
-```
-Replace `app_label` and `model_name` based in the model you want to add. For example, if you want to assign vulnerabilities to the platform model in the dcim app, you would use 'dcim.platform' as shown in the example below:
+To assign vulnerabilities to additional models beyond the defaults (`dcim.device`, `virtualization.virtualmachine`, `tenancy.tenant`, `dcim.site`), add them via `additional_assets` in `PLUGINS_CONFIG`:
+
 ```python
 PLUGINS_CONFIG = {
     'nb_risk': {
@@ -63,7 +80,19 @@ PLUGINS_CONFIG = {
     },
 }
 ```
-Note that you can specify multiple models by adding them to the `additional_assets` list.
+
+Replace `app_label.model_name` with the target model. Multiple models can be listed. For example:
+
+```python
+PLUGINS_CONFIG = {
+    'nb_risk': {
+        'additional_assets': [
+            'dcim.platform',
+            'dcim.rack',
+        ],
+    },
+}
+```
 
 ## Screenshots
 
@@ -90,4 +119,3 @@ Note that you can specify multiple models by adding them to the `additional_asse
 ### Risks View
 
 ![image](https://user-images.githubusercontent.com/16046203/214702218-b74e9f49-6a0d-4789-8518-32e99ef7fead.png)
-

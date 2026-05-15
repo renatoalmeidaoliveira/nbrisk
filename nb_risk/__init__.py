@@ -1,5 +1,6 @@
-from extras.plugins import PluginConfig
+from netbox.plugins import PluginConfig
 from .version import __version__
+
 
 
 class NbriskConfig(PluginConfig):
@@ -8,8 +9,10 @@ class NbriskConfig(PluginConfig):
     verbose_name = "Risk Management"
     description = "NIST 800-30 Risk Management for Netbox"
     version = __version__
-    author = "Renato Almdida Oliveira"
+    author = "Renato Almeida de Oliveira Zaroubin"
     author_email = "renato.almeida.oliveira@gmail.com"
+    min_version = "4.5.0"
+    max_version = "4.5.99"
     required_settings = []
     default_settings = {
         "supported_assets": [
@@ -19,7 +22,11 @@ class NbriskConfig(PluginConfig):
             "dcim.site",
         ],
         "additional_assets": [],
+        "proxies": {},
     }
-
+    
+    def ready(self):
+        from . import signals
+        super().ready()
 
 config = NbriskConfig  # noqa
