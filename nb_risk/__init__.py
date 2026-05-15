@@ -9,8 +9,8 @@ class NbriskConfig(PluginConfig):
     verbose_name = "Risk Management"
     description = "NIST 800-30 Risk Management for Netbox"
     version = __version__
-    author = "Renato Almeida de Oliveira Zaroubin"
-    author_email = "renato.almeida.oliveira@gmail.com"
+    author = "Blake Parker"
+    author_email = "blake.parker@e280.com"
     min_version = "4.5.0"
     max_version = "4.5.99"
     required_settings = []
