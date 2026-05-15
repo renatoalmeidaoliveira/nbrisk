@@ -1,5 +1,5 @@
-PYTHON_VER?=3.10
-NETBOX_VER?=v4.1.0
+PYTHON_VER?=3.12
+NETBOX_VER?=v4.5.9
 
 
 COMPOSE_FILE=./develop/docker-compose.yml
@@ -54,7 +54,3 @@ test:
 pbuild:
 	python3 -m pip install --upgrade build
 	python3 -m build
-
-publish:
-	python3 -m pip install --user --upgrade twine
-	python3 -m twine upload dist/*
