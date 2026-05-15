@@ -5,10 +5,10 @@
 
 ## Compatibility
 
-| NBRisk Branch | NetBox Version | Python |
+| NBRisk Version | NetBox Version | Python |
 |---|---|---|
-| `NetBox_v4.1` (this fork) | 4.5.x | 3.12+ |
-| `NetBox_v4.1` (upstream) | 4.1.x | 3.10+ |
+| 45.0.0 (this fork) | 4.5.x | 3.12+ |
+| 41.0.2 (upstream) | 4.1.x | 3.10+ |
 | upstream | 4.0.x | 3.10+ |
 | upstream | 3.5.8 – 3.7.x | 3.8+ |
 | upstream | 3.5.0 – 3.5.7 | 3.8+ |
@@ -16,21 +16,20 @@
 
 ## Installation
 
-### Installing from this fork (NetBox 4.5.x)
-
-The recommended approach is to install directly from this fork's `NetBox_v4.1` branch. To ensure the plugin is automatically re-installed during future NetBox upgrades, add it to your `local_requirements.txt`:
+The recommended approach is to install directly from this fork. To ensure the plugin is automatically re-installed during future NetBox upgrades, add it to your `local_requirements.txt`:
 
 ```shell
-echo "git+https://github.com/droolingtaz/nbrisk.git@NetBox_v4.1#egg=NbRisk" >> /opt/netbox/local_requirements.txt
+echo "git+https://github.com/droolingtaz/nbrisk.git@main#egg=NbRisk" >> /opt/netbox/local_requirements.txt
 ```
 
 Then install and migrate:
 
 ```shell
 source /opt/netbox/venv/bin/activate
-pip install "git+https://github.com/droolingtaz/nbrisk.git@NetBox_v4.1#egg=NbRisk"
+pip install "git+https://github.com/droolingtaz/nbrisk.git@main#egg=NbRisk"
 cd /opt/netbox/netbox
 python3 manage.py migrate nb_risk
+sudo systemctl restart netbox netbox-rq
 ```
 
 ## Enabling the Plugin
@@ -55,7 +54,7 @@ PLUGINS_CONFIG = {
 }
 ```
 
-Replace `app_label.model_name` with the target model. Multiple models can be listed. For example:
+Multiple models can be listed:
 
 ```python
 PLUGINS_CONFIG = {
@@ -66,6 +65,39 @@ PLUGINS_CONFIG = {
         ],
     },
 }
+```
+
+## Development
+
+A Docker Compose development environment is included. It spins up NetBox 4.5.9 with the plugin installed in editable mode alongside PostgreSQL 15 and Redis 7.
+
+```shell
+# Build the development containers
+make cbuild
+
+# Start in the foreground (with logs)
+make debug
+
+# Start in the background
+make start
+
+# Stop
+make stop
+
+# Destroy (including database volume)
+make destroy
+
+# Open a NetBox shell
+make nbshell
+
+# Create a superuser
+make adduser
+
+# Generate migrations after model changes
+make migrations
+
+# Run tests
+make test
 ```
 
 ## Screenshots
