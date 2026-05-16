@@ -51,12 +51,6 @@ PLUGINS_CONFIG = {
         # Get a free key at https://nvd.nist.gov/developers/request-an-api-key
         'nvd_api_key': 'your-api-key-here',
 
-        # Optional proxy settings for NVD API requests
-        'proxies': {
-            'http': 'http://proxy.example.com:8080',
-            'https': 'http://proxy.example.com:8080',
-        },
-
         # Additional models to support vulnerability assignment beyond the defaults
         # Defaults: dcim.device, virtualization.virtualmachine, tenancy.tenant, dcim.site
         'additional_assets': [
@@ -69,6 +63,17 @@ PLUGINS_CONFIG = {
 ### NVD API Key
 
 The CVE search feature queries the [NIST NVD API](https://nvd.nist.gov/developers/vulnerabilities). Without an API key requests are rate-limited to 5 per 30 seconds; with a key the limit is 50 per 30 seconds. A free key can be requested at [nvd.nist.gov/developers/request-an-api-key](https://nvd.nist.gov/developers/request-an-api-key).
+
+### Proxy Settings
+
+The plugin uses NetBox's built-in `HTTP_PROXIES` setting from `configuration.py` for all NVD API requests — no additional plugin configuration is needed:
+
+```python
+HTTP_PROXIES = {
+    'http': 'http://proxy.example.com:8080',
+    'https': 'http://proxy.example.com:8080',
+}
+```
 
 ### Additional Assets
 

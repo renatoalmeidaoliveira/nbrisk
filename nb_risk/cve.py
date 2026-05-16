@@ -6,6 +6,7 @@ from virtualization.models import VirtualMachine
 from utilities.views import ViewTab, register_model_view
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
+from django.conf import settings
 
 from django.views.generic import View
 from django.shortcuts import redirect, render
@@ -59,6 +60,20 @@ def _get_nvd_headers():
     if api_key:
         headers["apiKey"] = api_key
     return headers
+
+
+def _get_proxies():
+    """
+    Return proxy settings for requests, using NetBox's own HTTP_PROXIES
+    setting from configuration.py. Falls back to the plugin-level 'proxies'
+    setting for backwards compatibility, then to no proxy.
+    """
+    # Prefer NetBox's built-in HTTP_PROXIES (set in configuration.py)
+    netbox_proxies = getattr(settings, 'HTTP_PROXIES', None)
+    if netbox_proxies:
+        return netbox_proxies
+    # Fall back to plugin-level setting for backwards compatibility
+    return get_plugin_config("nb_risk", "proxies") or {}
 
 
 def get_query(request):
@@ -207,7 +222,7 @@ def _parse_cpe_entries(entries, return_url):
     For each CPE found, perform a follow-up CVE lookup by cpeName so
     the results table still shows CVEs.
     """
-    proxies = get_plugin_config("nb_risk", "proxies")
+    proxies = _get_proxies()
     headers = _get_nvd_headers()
     output = []
 
@@ -238,7 +253,7 @@ def get_cves(request):
         return []
 
     try:
-        proxies = get_plugin_config("nb_risk", "proxies")
+        proxies = _get_proxies()
         headers = _get_nvd_headers()
         return_url = f"{request.path}?{request.META['QUERY_STRING']}"
 

@@ -22,6 +22,7 @@ class NbriskConfig(PluginConfig):
             "dcim.site",
         ],
         "additional_assets": [],
+        # Deprecated: use NetBox's built-in HTTP_PROXIES setting in configuration.py instead
         "proxies": {},
         "nvd_api_key": None,
     }
