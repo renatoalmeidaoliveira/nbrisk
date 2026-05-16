@@ -135,6 +135,36 @@ make migrations
 make test
 ```
 
+## Device CVE Tab
+
+When [netbox-software-tracker](https://github.com/zerogravitas/netbox-software-tracker) is installed and the `software_version` custom field is populated on a device, a **CVEs** tab appears on the Device detail page. It automatically queries the NIST NVD API for CVEs matching the device's running software.
+
+### How it works
+
+1. Reads the `software_version` custom field from the device
+2. Builds CPE 2.3 strings using the device's manufacturer, platform name (preferred), and device type model
+3. Queries NVD for both `o` (OS/firmware) and `a` (application) part types
+4. Deduplicates results and displays them with colour-coded CVSS scores and a one-click Import button
+
+### CPE normalization
+
+Manufacturer and product names are normalized automatically for NVD compatibility — lowercased and spaces/hyphens replaced with underscores. For example, `Cisco Systems` → `cisco_systems`, `IOS-XE` → `ios_xe`.
+
+A **CPE Queries** panel at the bottom of the tab shows exactly what was sent to NVD. If you expect results but none appear, use the [NVD CPE Search](https://nvd.nist.gov/products/cpe/search) to verify the vendor/product names match NVD's dictionary.
+
+### CVSS score colours
+
+| Score | Severity |
+|---|---|
+| 9.0+ | 🔴 Critical |
+| 7.0–8.9 | 🟡 High |
+| 4.0–6.9 | 🔵 Medium |
+| Below 4.0 | ⚪ Low |
+
+### Configuration
+
+The `software_version` custom field name is configurable via the `netbox_software_tracker` plugin settings (default: `software_version`). No additional configuration is needed in `nb_risk`.
+
 ## Screenshots
 
 ### Plugin Menu
