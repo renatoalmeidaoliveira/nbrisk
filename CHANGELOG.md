@@ -1,5 +1,15 @@
 # Changelog
 
+## 45.2.0 (15/05/2026)
+
+* Add **Device CVE tab** — queries NVD for CVEs matching the device's running software via the `software_version` custom field (populated by `netbox_software_tracker`)
+* CPE strings are built automatically from the device's manufacturer, platform (preferred), and device type model, querying both `o` (OS/firmware) and `a` (application) part types
+* CPE component normalization: lowercased, spaces/hyphens replaced with underscores for NVD compatibility
+* Tab shows colour-coded CVSS scores (Critical/High/Medium/Low), NVD links, and one-click Import button per CVE
+* Tab renders informative empty states when no software version is set or no CVEs are found
+* CPE Queries panel shows exactly what was sent to NVD for transparency and debugging
+* Use NetBox `HTTP_PROXIES` setting for all NVD API requests instead of plugin-level proxy config
+
 ## 45.1.0 (15/05/2026)
 
 * Add `nvd_api_key` to plugin config — passed as `apiKey` header to raise NVD rate limit from 5 to 50 requests/30s
