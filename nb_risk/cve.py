@@ -13,8 +13,10 @@ from django.shortcuts import redirect, render
 
 from utilities.views import ObjectPermissionRequiredMixin
 from utilities.permissions import get_permission_for_model
+from netbox.views import generic
 
 import logging
+import re
 import requests
 
 logger = logging.getLogger(__name__)
@@ -277,3 +279,159 @@ def get_cves(request):
     except Exception as e:
         logger.error("NVD API request failed: %s", e)
         return []
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Software CVE Integration (netbox_software_tracker)
+# ─────────────────────────────────────────────────────────────────────────────
+
+SW_TRACKER_CF = "software_version"  # custom field name used by netbox_software_tracker
+
+
+def _normalize_cpe_component(value):
+    """
+    Normalize a string to a CPE 2.3 component:
+    - lowercase
+    - replace spaces, hyphens, and slashes with underscores
+    - strip any remaining non-alphanumeric/underscore/dot chars
+    e.g. 'Cisco Systems' -> 'cisco_systems'
+         'IOS-XE'        -> 'ios_xe'
+         'C9300-48P'     -> 'c9300_48p'
+    """
+    if not value:
+        return "*"
+    value = value.lower()
+    value = re.sub(r'[\s\-/]+', '_', value)
+    value = re.sub(r'[^a-z0-9_.]+', '', value)
+    return value or "*"
+
+
+def _build_device_cpes(device):
+    """
+    Build a list of CPE 2.3 strings to query NVD for a given device.
+    Uses:
+      - Manufacturer from device.device_type.manufacturer.name
+      - Product from device.platform.name (preferred) or device_type.model
+      - Version from the software_version custom field (set by netbox_software_tracker)
+
+    Returns a list of (cpe_string, label) tuples covering both
+    'o' (OS/firmware) and 'a' (application) part types.
+    """
+    cpes = []
+
+    # Get version from custom field
+    version = device.custom_field_data.get(SW_TRACKER_CF) or "*"
+    version = _normalize_cpe_component(str(version)) if version != "*" else "*"
+
+    # Get vendor
+    try:
+        vendor = _normalize_cpe_component(device.device_type.manufacturer.name)
+    except AttributeError:
+        vendor = "*"
+
+    # Build product candidates — platform name is most accurate for software CVEs
+    products = []
+    if device.platform:
+        products.append((
+            _normalize_cpe_component(device.platform.name),
+            f"Platform: {device.platform.name}"
+        ))
+    # Always include device type model as a fallback
+    products.append((
+        _normalize_cpe_component(device.device_type.model),
+        f"Device Type: {device.device_type.model}"
+    ))
+
+    # Generate CPEs for OS ('o') and application ('a') part types
+    # Hardware ('h') is intentionally excluded — most CVEs are software
+    for product, label in products:
+        for part in ('o', 'a'):
+            part_label = 'OS/Firmware' if part == 'o' else 'Application'
+            cpe = f"cpe:2.3:{part}:{vendor}:{product}:{version}:*:*:*:*:*:*:*"
+            cpes.append((cpe, f"{label} [{part_label}]"))
+
+    return cpes
+
+
+def get_device_cves(device, return_url=""):
+    """
+    Query NVD for CVEs affecting the given device based on its
+    software version (from the netbox_software_tracker custom field),
+    manufacturer, and platform/device type.
+
+    Returns a list of parsed CVE dicts ready for CveTable.
+    """
+    cpes = _build_device_cpes(device)
+    if not cpes:
+        return [], []
+
+    proxies = _get_proxies()
+    headers = _get_nvd_headers()
+    results = []
+    cpes_used = []
+
+    for cpe_string, label in cpes:
+        try:
+            r = requests.get(
+                NVD_CVE_URI,
+                params={"cpeName": cpe_string},
+                headers=headers,
+                proxies=proxies,
+                timeout=15,
+            )
+            r.raise_for_status()
+            entries = r.json().get("vulnerabilities", [])
+            if entries:
+                cpes_used.append((cpe_string, label, len(entries)))
+                results.extend(_parse_cve_entries(entries, return_url))
+        except Exception as e:
+            logger.warning("NVD CVE lookup failed for CPE %s: %s", cpe_string, e)
+
+    # Deduplicate by CVE ID, preserving order
+    seen = set()
+    deduped = []
+    for r in results:
+        if r["id"] not in seen:
+            seen.add(r["id"])
+            deduped.append(r)
+
+    return deduped, cpes_used
+
+
+class DeviceCVEView(ObjectPermissionRequiredMixin, View):
+    """
+    A tab on the Device detail page that queries NVD for CVEs
+    matching the device's software version, manufacturer, and platform.
+    Requires netbox_software_tracker to populate the software_version
+    custom field on devices.
+    """
+    queryset = Device.objects.all()
+    template_name = "nb_risk/device_cve_tab.html"
+
+    def get_required_permission(self):
+        return get_permission_for_model(Device, "view")
+
+    def get(self, request, pk):
+        device = get_object_or_404(Device, pk=pk)
+        return_url = request.build_absolute_uri()
+        sw_version = device.custom_field_data.get(SW_TRACKER_CF)
+
+        cves, cpes_used = [], []
+        if sw_version:
+            cves, cpes_used = get_device_cves(device, return_url)
+
+        table = tables.CveTable(cves)
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "object": device,
+                "table": table,
+                "cves": cves,
+                "cpes_used": cpes_used,
+                "sw_version": sw_version,
+                "sw_tracker_cf": SW_TRACKER_CF,
+                "active_tab": "cve",
+            },
+        )
