@@ -291,20 +291,23 @@ SW_TRACKER_CF = "software_version"  # custom field name used by netbox_software_
 
 def _normalize_cpe_component(value):
     """
-    Normalize a vendor/product string to a CPE 2.3 component:
-    - lowercase
-    - replace spaces, hyphens, and slashes with underscores
-    - strip any remaining non-alphanumeric/underscore/dot chars
+    Normalize a vendor/product string to a CPE 2.3 component.
+    - Lowercase
+    - Replace spaces with underscores (spaces are never valid in CPE)
+    - Preserve hyphens — NVD uses them in many product names (e.g. 'nx-os', 'ios-xe')
+    - Strip any remaining non-alphanumeric/hyphen/underscore/dot chars
     e.g. 'Cisco Systems' -> 'cisco_systems'
-         'IOS-XE'        -> 'ios_xe'
-         'C9300-48P'     -> 'c9300_48p'
+         'NX-OS'         -> 'nx-os'   (matches NVD exactly)
+         'IOS-XE'        -> 'ios-xe'  (matches NVD exactly)
+         'C9300-48P'     -> 'c9300-48p'
     NOTE: use _normalize_cpe_version() for version strings.
     """
     if not value:
         return "*"
     value = value.lower()
-    value = re.sub(r'[\s\-/]+', '_', value)
-    value = re.sub(r'[^a-z0-9_.]+', '', value)
+    value = re.sub(r'\s+', '_', value)          # spaces only -> underscores
+    value = re.sub(r'/+', '-', value)            # slashes -> hyphens
+    value = re.sub(r'[^a-z0-9_.\-]+', '', value) # strip everything else
     return value or "*"
 
 
@@ -426,6 +429,30 @@ def get_device_cves(device, return_url=""):
         if r["id"] not in seen:
             seen.add(r["id"])
             deduped.append(r)
+
+    # If no CPE queries matched, fall back to keyword search using
+    # vendor + platform/model so the user gets something useful
+    if not deduped and not cpes_used:
+        try:
+            vendor = _normalize_cpe_component(device.device_type.manufacturer.name)
+            product = _normalize_cpe_component(
+                device.platform.name if device.platform else device.device_type.model
+            )
+            keyword = f"{vendor} {product}"
+            r = requests.get(
+                NVD_CVE_URI,
+                params={"keywordSearch": keyword, "resultsPerPage": 20},
+                headers=headers,
+                proxies=proxies,
+                timeout=15,
+            )
+            r.raise_for_status()
+            entries = r.json().get("vulnerabilities", [])
+            if entries:
+                cpes_used.append((f"keyword: {keyword}", "Keyword fallback", len(entries)))
+                deduped = _parse_cve_entries(entries, return_url)
+        except Exception as e:
+            logger.warning("NVD keyword fallback failed: %s", e)
 
     return deduped, cpes_used
 
