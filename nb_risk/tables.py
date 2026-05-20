@@ -162,10 +162,34 @@ class InKEVColumn(tables.Column):
         return mark_safe('<span class="text-muted">&mdash;</span>')
 
 
+class EPSSColumn(tables.Column):
+    """Renders EPSS score with colour-coded risk badge."""
+    attrs = {"td": {"class": "text-nowrap"}}
+
+    def render(self, value, record):
+        if value is None:
+            return mark_safe('<span class="text-muted">&mdash;</span>')
+        score = float(value)
+        percentile = record.get('epss_percentile')
+        pct_str = f"{float(percentile)*100:.0f}th" if percentile is not None else ""
+        if score >= 0.5:
+            colour = "bg-danger"
+        elif score >= 0.1:
+            colour = "bg-warning text-dark"
+        elif score >= 0.01:
+            colour = "bg-info text-dark"
+        else:
+            colour = "bg-secondary"
+        return mark_safe(
+            f'<span class="badge {colour}" title="{pct_str} percentile">{score:.4f}</span>'
+        )
+
+
 class CveTable(NetBoxTable):
 
     id = tables.Column(attrs={"td": {"class": "text-end text-nowrap"}})
     in_kev = InKEVColumn(verbose_name='KEV', default=False)
+    epss_score = EPSSColumn(verbose_name='EPSS', default=None)
     description = tables.Column()
     baseScore = tables.Column(verbose_name="Base Score")
     cvssVersion = tables.Column(verbose_name="CVSS Version")
@@ -178,6 +202,7 @@ class CveTable(NetBoxTable):
         fields = [
             "id",
             "in_kev",
+            "epss_score",
             "description",
             "cvssVersion",
             "baseScore",

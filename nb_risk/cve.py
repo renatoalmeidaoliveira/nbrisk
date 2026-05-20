@@ -27,7 +27,15 @@ from django.core.cache import cache
 logger = logging.getLogger(__name__)
 
 from . import forms, models, tables
-from .kev import enrich_cve_results
+from .kev import enrich_cve_results as enrich_kev
+from .epss import enrich_cve_results as enrich_epss
+
+
+def enrich_cve_results(cve_list):
+    """Enrich CVE dicts with both KEV status and EPSS scores."""
+    enrich_kev(cve_list)
+    enrich_epss(cve_list)
+    return cve_list
 
 NVD_CVE_URI = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 NVD_CPE_URI = "https://services.nvd.nist.gov/rest/json/cpes/2.0"

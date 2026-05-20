@@ -92,6 +92,31 @@ class Vulnerability(NetBoxModel):
         blank=True,
     )
 
+    # EPSS fields — populated by sync_epss management command
+    epss_score = models.DecimalField(
+        "EPSS Score",
+        max_digits=10,
+        decimal_places=9,
+        null=True,
+        blank=True,
+        help_text="FIRST.org Exploit Prediction Scoring System score (0.0–1.0). "
+                  "Probability this CVE will be exploited in the next 30 days.",
+    )
+    epss_percentile = models.DecimalField(
+        "EPSS Percentile",
+        max_digits=10,
+        decimal_places=9,
+        null=True,
+        blank=True,
+        help_text="Percentage of all CVEs with a lower EPSS score.",
+    )
+    epss_date = models.DateField(
+        "EPSS Date",
+        null=True,
+        blank=True,
+        help_text="Date the EPSS score was last updated.",
+    )
+
     cvssaccessVector = models.CharField(
         "Access Vector (AV)", max_length=100, blank=True
     )

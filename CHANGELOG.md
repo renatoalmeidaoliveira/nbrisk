@@ -1,5 +1,16 @@
 # Changelog
 
+## 45.5.0 (20/05/2026)
+
+* Add **EPSS integration** — FIRST.org Exploit Prediction Scoring System scores for all CVEs
+* Add `epss_score`, `epss_percentile`, `epss_date` fields to `Vulnerability` model
+* Add `sync_epss` management command (`manage.py sync_epss [--dry-run]`)
+* EPSS scores displayed as colour-coded badges in CVE Search results and Device CVE tab
+  (red ≥ 0.5, yellow ≥ 0.1, blue ≥ 0.01, grey < 0.01)
+* EPSS scores fetched in real-time for NVD search results with 24-hour per-CVE Redis caching
+* Hover tooltip on EPSS badge shows percentile rank
+* Add migration `0011_vulnerability_epss_fields`
+
 ## 45.4.0 (20/05/2026)
 
 * Add **CISA KEV integration** — sync the CISA Known Exploited Vulnerabilities catalog against Vulnerability records

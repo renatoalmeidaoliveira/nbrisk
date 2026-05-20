@@ -92,6 +92,7 @@
                 <tr>
                   <th>CVE ID</th>
                   <th>KEV</th>
+                  <th>EPSS</th>
                   <th>CVSS</th>
                   <th>Score</th>
                   <th>Attack Vector</th>
@@ -108,6 +109,23 @@
                   <td class="text-center">
                     {% if cve.in_kev %}
                       <span class="badge bg-danger" title="CISA Known Exploited Vulnerability"><i class="mdi mdi-alert"></i> KEV</span>
+                    {% else %}
+                      <span class="text-muted">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-nowrap">
+                    {% if cve.epss_score is not None %}
+                      {% with score=cve.epss_score|floatformat:4 %}
+                      {% if cve.epss_score >= 0.5 %}
+                        <span class="badge bg-danger" title="{{ cve.epss_percentile|floatformat:0 }}th percentile">{{ score }}</span>
+                      {% elif cve.epss_score >= 0.1 %}
+                        <span class="badge bg-warning text-dark" title="{{ cve.epss_percentile|floatformat:0 }}th percentile">{{ score }}</span>
+                      {% elif cve.epss_score >= 0.01 %}
+                        <span class="badge bg-info text-dark" title="{{ cve.epss_percentile|floatformat:0 }}th percentile">{{ score }}</span>
+                      {% else %}
+                        <span class="badge bg-secondary" title="{{ cve.epss_percentile|floatformat:0 }}th percentile">{{ score }}</span>
+                      {% endif %}
+                      {% endwith %}
                     {% else %}
                       <span class="text-muted">&mdash;</span>
                     {% endif %}
