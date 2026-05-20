@@ -2,6 +2,7 @@ import django_tables2 as tables
 from django_tables2.utils import Accessor
 
 from netbox.tables import NetBoxTable, columns
+from netbox.tables.columns import ActionsColumn
 from django.db.models import Count
 
 from . import models
@@ -160,3 +161,28 @@ class ControlTable(NetBoxTable):
     class Meta(NetBoxTable.Meta):
         model = models.Control
         fields = ["name",]
+
+
+# CPEMapping Tables
+
+class CPEMappingTable(NetBoxTable):
+    platform = tables.Column(linkify=True)
+    device_type = tables.Column(linkify=True)
+    cpe_vendor = tables.Column(verbose_name='Vendor')
+    cpe_product = tables.Column(verbose_name='Product')
+    cpe_part = tables.Column(verbose_name='Part')
+    cpe_target_sw = tables.Column(verbose_name='Target SW')
+    verified = tables.BooleanColumn(verbose_name='Verified')
+    actions = ActionsColumn(actions=('edit', 'delete'))
+
+    class Meta(NetBoxTable.Meta):
+        model = models.CPEMapping
+        fields = [
+            'pk', 'id', 'platform', 'device_type',
+            'cpe_part', 'cpe_vendor', 'cpe_product', 'cpe_target_sw',
+            'verified', 'actions',
+        ]
+        default_columns = [
+            'platform', 'device_type', 'cpe_part', 'cpe_vendor',
+            'cpe_product', 'cpe_target_sw', 'verified', 'actions',
+        ]

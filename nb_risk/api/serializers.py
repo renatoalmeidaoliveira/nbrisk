@@ -169,3 +169,35 @@ class ControlSerializer(NetBoxModelSerializer):
             "notes",
             "risk",
         ]
+
+
+# CPEMapping Serializers
+
+class CPEMappingSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:cpemapping-detail")
+    display = serializers.SerializerMethodField('get_display')
+    platform = serializers.SerializerMethodField()
+    device_type = serializers.SerializerMethodField()
+
+    def get_display(self, obj):
+        return str(obj)
+
+    def get_platform(self, obj):
+        if obj.platform:
+            return {'id': obj.platform.pk, 'name': obj.platform.name}
+        return None
+
+    def get_device_type(self, obj):
+        if obj.device_type:
+            return {'id': obj.device_type.pk, 'model': obj.device_type.model}
+        return None
+
+    class Meta:
+        model = models.CPEMapping
+        fields = [
+            'id', 'url', 'display',
+            'platform', 'device_type',
+            'cpe_part', 'cpe_vendor', 'cpe_product', 'cpe_target_sw',
+            'verified', 'notes',
+        ]
+        brief_fields = ['id', 'url', 'display', 'cpe_vendor', 'cpe_product']

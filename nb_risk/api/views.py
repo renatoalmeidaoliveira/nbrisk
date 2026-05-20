@@ -38,3 +38,10 @@ class RiskViewSet(NetBoxModelViewSet):
 class ControlViewSet(NetBoxModelViewSet):
     queryset = models.Control.objects.all().order_by('name')
     serializer_class = serializers.ControlSerializer
+
+
+# CPEMapping ViewSet
+
+class CPEMappingViewSet(NetBoxModelViewSet):
+    queryset = models.CPEMapping.objects.all().order_by('cpe_vendor', 'cpe_product')
+    serializer_class = serializers.CPEMappingSerializer

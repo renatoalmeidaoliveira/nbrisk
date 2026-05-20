@@ -1,0 +1,36 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><strong>CPE Mapping</strong></div>
+      <div class="card-body">
+        <table class="table table-hover attr-table">
+          <tr><td>Platform</td><td>{{ object.platform|default:"—" }}</td></tr>
+          <tr><td>Device Type</td><td>{{ object.device_type|default:"—" }}</td></tr>
+          <tr><td>CPE Part</td><td>{{ object.get_cpe_part_display }}</td></tr>
+          <tr><td>CPE Vendor</td><td><code>{{ object.cpe_vendor }}</code></td></tr>
+          <tr><td>CPE Product</td><td><code>{{ object.cpe_product }}</code></td></tr>
+          <tr><td>CPE Target SW</td><td>{% if object.cpe_target_sw %}<code>{{ object.cpe_target_sw }}</code>{% else %}—{% endif %}</td></tr>
+          <tr><td>Verified</td><td>{% if object.verified %}<span class="badge bg-success">Yes</span>{% else %}<span class="badge bg-warning text-dark">No</span>{% endif %}</td></tr>
+          <tr><td>Notes</td><td>{{ object.notes|default:"—" }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><strong>Generated CPE (example with version *)</strong></div>
+      <div class="card-body">
+        <code>{{ object.build_cpe }}</code>
+        <p class="text-muted small mt-2 mb-0">
+          The actual version component is replaced with the device's
+          <code>software_version</code> custom field value at query time.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

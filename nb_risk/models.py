@@ -3,8 +3,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.urls import reverse
 from django.db.models.functions import Lower
+from django.core.exceptions import ValidationError
 
 from netbox.models import NetBoxModel
+from dcim.models import Platform, DeviceType
 from . import choices
 
 # ThreatSource Model
@@ -278,3 +280,94 @@ class Control(NetBoxModel):
 
     class Meta:
         ordering = ('name',)
+
+
+# CPEMapping Model
+
+CPE_PART_CHOICES = (
+    ('o', 'Operating System (o)'),
+    ('a', 'Application (a)'),
+    ('h', 'Hardware (h)'),
+)
+
+
+class CPEMapping(NetBoxModel):
+    """
+    Maps a NetBox Platform or DeviceType to a verified NVD CPE 2.3 string.
+    Used by the Device CVE tab to build precise CPE queries instead of
+    guessing vendor/product names from free-text fields.
+
+    Either platform or device_type must be set (not both, not neither).
+    The full CPE is assembled as:
+        cpe:2.3:{part}:{vendor}:{product}:*:*:*:*:*:{target_sw}:*:*
+    with the device's software_version substituted for the version component.
+    """
+    platform = models.ForeignKey(
+        to='dcim.Platform',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='cpe_mappings',
+        help_text='Map this CPE to a specific platform (e.g. NX-OS, IOS-XE)',
+    )
+    device_type = models.ForeignKey(
+        to='dcim.DeviceType',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='cpe_mappings',
+        help_text='Map this CPE to a specific device type (takes precedence over platform)',
+    )
+    cpe_part = models.CharField(
+        'CPE Part',
+        max_length=1,
+        choices=CPE_PART_CHOICES,
+        default='o',
+        help_text='CPE part type: o=OS, a=Application, h=Hardware',
+    )
+    cpe_vendor = models.CharField(
+        'CPE Vendor',
+        max_length=100,
+        help_text='NVD CPE vendor component (e.g. cisco, juniper, paloaltonetworks)',
+    )
+    cpe_product = models.CharField(
+        'CPE Product',
+        max_length=100,
+        help_text='NVD CPE product component (e.g. nx-os, junos, pan-os)',
+    )
+    cpe_target_sw = models.CharField(
+        'CPE Target Software',
+        max_length=100,
+        blank=True,
+        help_text='Optional 8th CPE component for scoping (e.g. nexus_9000_series). '
+                  'Leave blank if not needed.',
+    )
+    verified = models.BooleanField(
+        'Verified',
+        default=False,
+        help_text='Mark as verified once confirmed against NVD CPE dictionary',
+    )
+    notes = models.TextField('Notes', blank=True)
+
+    def __str__(self):
+        scope = self.platform or self.device_type
+        return f"{scope} → cpe:2.3:{self.cpe_part}:{self.cpe_vendor}:{self.cpe_product}"
+
+    def get_absolute_url(self):
+        return reverse('plugins:nb_risk:cpemapping', args=[self.pk])
+
+    def clean(self):
+        if not self.platform and not self.device_type:
+            raise ValidationError('Either a Platform or a Device Type must be specified.')
+        if self.platform and self.device_type:
+            raise ValidationError('Specify either a Platform or a Device Type, not both.')
+
+    def build_cpe(self, version='*'):
+        """Return a full CPE 2.3 string with the given version."""
+        target_sw = self.cpe_target_sw or '*'
+        return f"cpe:2.3:{self.cpe_part}:{self.cpe_vendor}:{self.cpe_product}:{version}:*:*:*:*:{target_sw}:*:*"
+
+    class Meta:
+        ordering = ('cpe_vendor', 'cpe_product')
+        verbose_name = 'CPE Mapping'
+        verbose_name_plural = 'CPE Mappings'

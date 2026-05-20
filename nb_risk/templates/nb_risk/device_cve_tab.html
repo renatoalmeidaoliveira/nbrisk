@@ -46,19 +46,37 @@
       </div>
 
     {% else %}
+      {% if not has_mapping %}
+      <div class="alert alert-warning" role="alert">
+        <h5 class="alert-heading"><i class="mdi mdi-map-marker-alert-outline"></i> No verified CPE Mapping configured</h5>
+        <p>
+          Results are based on heuristic CPE string guessing and may be inaccurate.
+          For precise, vendor-agnostic CVE matching, create a <strong>CPE Mapping</strong> for this
+          device's platform or device type.
+        </p>
+        <div class="d-flex gap-2">
+          <a href="{{ cpe_lookup_url }}" class="btn btn-sm btn-primary">
+            <i class="mdi mdi-magnify"></i> Look up CPE
+          </a>
+          <a href="{{ cpemapping_add_url }}" class="btn btn-sm btn-outline-secondary">
+            <i class="mdi mdi-plus-thick"></i> Add Mapping manually
+          </a>
+        </div>
+      </div>
+      {% endif %}
+
       {% for cpe, label, count in cpes_used %}
         {% if "fallback" in label|lower %}
-        <div class="alert alert-warning" role="alert">
-          <h5 class="alert-heading"><i class="mdi mdi-alert-outline"></i> Broad keyword results — not version-specific</h5>
+        <div class="alert alert-info" role="alert">
+          <h5 class="alert-heading"><i class="mdi mdi-information-outline"></i> Keyword fallback — version not in NVD CPE dictionary</h5>
           <p>
-            Version <strong>{{ sw_version }}</strong> is not yet in the NVD CPE dictionary.
-            Results below are matched by keyword (<code>{{ cpe|slice:"8:" }}</code>) and may include CVEs
-            for <strong>other versions or device models</strong>. Use them as a reference only.
+            Version <strong>{{ sw_version }}</strong> is not yet catalogued in NVD.
+            Results are matched by keyword (<code>{{ cpe|slice:"8:" }}</code>) and may include CVEs
+            for <strong>other versions or device models</strong>.
           </p>
           <p class="mb-0 small text-muted">
-            NVD CPE coverage for this version will improve over time as Cisco publishes advisories.
-            Check <a href="https://tools.cisco.com/security/center/publicationListing.x" target="_blank">Cisco Security Advisories</a>
-            for version-specific vulnerabilities.
+            NVD coverage improves over time as vendors publish advisories.
+            Check the vendor's security advisory portal for version-specific vulnerabilities.
           </p>
         </div>
         {% endif %}

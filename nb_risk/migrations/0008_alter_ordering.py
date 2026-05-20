@@ -1,4 +1,4 @@
-# Generated migration for NetBox 4.5.x compatibility
+# Migration for NetBox 4.5.x compatibility
 # Adds Meta.ordering = ('name',) to all models for deterministic API pagination
 
 from django.db import migrations
@@ -17,7 +17,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterModelOptions(
             name='vulnerability',
-            options={'ordering': ('name',), 'verbose_name': 'Vulnerability', 'verbose_name_plural': 'Vulnerabilities'},
+            options={
+                'ordering': ('name',),
+                'verbose_name': 'Vulnerability',
+                'verbose_name_plural': 'Vulnerabilities',
+            },
         ),
         migrations.AlterModelOptions(
             name='vulnerabilityassignment',

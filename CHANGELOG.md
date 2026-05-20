@@ -1,5 +1,16 @@
 # Changelog
 
+## 45.3.0 (20/05/2026)
+
+* Add **CPEMapping model** — maps a NetBox Platform or DeviceType to a verified NVD CPE 2.3 string for precise, vendor-agnostic CVE matching
+* Add **CPE Lookup Assistant** — search the NVD CPE dictionary by keyword and create mappings directly from results
+* Device CVE tab now uses CPEMapping records when available; falls back to heuristic CPE generation when no mapping exists
+* Device CVE tab shows a warning with direct links to CPE Lookup and Add Mapping when no mapping is configured
+* Add CPE Mappings section to the Risk Assessment navigation menu with Lookup shortcut button
+* Add full CRUD views, bulk delete, and CSV import for CPEMapping
+* Add CPEMapping REST API endpoint at `/api/plugins/nb_risk/cpemapping/`
+* Add migration `0009_cpemapping`
+
 ## 45.2.0 (15/05/2026)
 
 * Add **Device CVE tab** — queries NVD for CVEs matching the device's running software via the `software_version` custom field (populated by `netbox_software_tracker`)

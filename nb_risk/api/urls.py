@@ -11,6 +11,7 @@ router.register('vulnerability', views.VulnerabilityViewSet)
 router.register('vulnerabilityassignment', views.VulnerabilityAssignmentViewSet)
 router.register('risk', views.RiskViewSet)
 router.register('control', views.ControlViewSet)
+router.register('cpemapping', views.CPEMappingViewSet)
 
 
 urlpatterns = router.urls

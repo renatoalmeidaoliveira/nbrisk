@@ -324,3 +324,74 @@ class ControlFilterForm(NetBoxModelFilterSetForm):
             "category",
             "risk",
         ]
+
+# CPEMapping Forms
+
+class CPEMappingForm(NetBoxModelForm):
+    platform = DynamicModelChoiceField(
+        queryset=__import__('dcim.models', fromlist=['Platform']).Platform.objects.all(),
+        required=False,
+        label='Platform',
+        help_text='Associate this CPE with a platform (e.g. NX-OS, IOS-XE)',
+    )
+    device_type = DynamicModelChoiceField(
+        queryset=DeviceType.objects.all(),
+        required=False,
+        label='Device Type',
+        help_text='Associate this CPE with a specific device type (takes precedence over platform)',
+    )
+
+    fieldsets = (
+        FieldSet('platform', 'device_type', name='Scope'),
+        FieldSet('cpe_part', 'cpe_vendor', 'cpe_product', 'cpe_target_sw', name='CPE Details'),
+        FieldSet('verified', 'notes', name='Meta'),
+    )
+
+    class Meta:
+        model = models.CPEMapping
+        fields = [
+            'platform',
+            'device_type',
+            'cpe_part',
+            'cpe_vendor',
+            'cpe_product',
+            'cpe_target_sw',
+            'verified',
+            'notes',
+        ]
+
+
+class CPEMappingFilterForm(NetBoxModelFilterSetForm):
+    model = models.CPEMapping
+    platform = DynamicModelMultipleChoiceField(
+        queryset=__import__('dcim.models', fromlist=['Platform']).Platform.objects.all(),
+        required=False,
+    )
+    device_type = DynamicModelMultipleChoiceField(
+        queryset=DeviceType.objects.all(),
+        required=False,
+    )
+    verified = forms.NullBooleanSelect()
+
+    class Meta:
+        fields = ['platform', 'device_type', 'cpe_vendor', 'cpe_product', 'verified']
+
+
+class CPEMappingImportForm(NetBoxModelImportForm):
+    platform = CSVModelChoiceField(
+        queryset=__import__('dcim.models', fromlist=['Platform']).Platform.objects.all(),
+        required=False,
+        to_field_name='name',
+    )
+    device_type = CSVModelChoiceField(
+        queryset=DeviceType.objects.all(),
+        required=False,
+        to_field_name='model',
+    )
+
+    class Meta:
+        model = models.CPEMapping
+        fields = [
+            'platform', 'device_type', 'cpe_part', 'cpe_vendor',
+            'cpe_product', 'cpe_target_sw', 'verified', 'notes',
+        ]

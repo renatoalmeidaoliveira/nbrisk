@@ -353,3 +353,36 @@ class ControlDeleteView(generic.ObjectDeleteView):
 class ControlBulkDeleteView(generic.BulkDeleteView):
     queryset = models.Control.objects.all()
     table = tables.ControlTable
+
+
+# CPEMapping Views
+
+class CPEMappingListView(generic.ObjectListView):
+    queryset = models.CPEMapping.objects.all()
+    table = tables.CPEMappingTable
+    filterset = filtersets.CPEMappingFilterSet
+    filterset_form = forms.CPEMappingFilterForm
+    actions = (AddObject, BulkImport, BulkDelete)
+
+
+class CPEMappingView(generic.ObjectView):
+    queryset = models.CPEMapping.objects.all()
+
+
+class CPEMappingEditView(generic.ObjectEditView):
+    queryset = models.CPEMapping.objects.all()
+    form = forms.CPEMappingForm
+
+
+class CPEMappingDeleteView(generic.ObjectDeleteView):
+    queryset = models.CPEMapping.objects.all()
+
+
+class CPEMappingBulkDeleteView(generic.BulkDeleteView):
+    queryset = models.CPEMapping.objects.all()
+    table = tables.CPEMappingTable
+
+
+class CPEMappingImportView(generic.BulkImportView):
+    queryset = models.CPEMapping.objects.all()
+    model_form = forms.CPEMappingImportForm

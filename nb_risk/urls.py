@@ -2,7 +2,7 @@ from django.urls import path, include
 from utilities.urls import get_model_urls
 from netbox.views.generic import ObjectChangeLogView, ObjectJournalView
 
-from . import models, views, cve
+from . import models, views, cve, cpe_lookup
 
 app_name = 'nb_risk'
 
@@ -47,6 +47,17 @@ urlpatterns = (
     path('vulnerability-assignments/<int:pk>/', include(get_model_urls(app_name, 'vulnerabilityassignment'))),
     path('vulnerability-assignments/import/', views.VulnerabilityAssignmentImportView.as_view(), name='vulnerabilityassignment_import'),
     
+    # CPEMapping URLs
+    path('cpe-mappings/', views.CPEMappingListView.as_view(), name='cpemapping_list'),
+    path('cpe-mappings/add/', views.CPEMappingEditView.as_view(), name='cpemapping_add'),
+    path('cpe-mappings/import/', views.CPEMappingImportView.as_view(), name='cpemapping_import'),
+    path('cpe-mappings/delete/', views.CPEMappingBulkDeleteView.as_view(), name='cpemapping_bulk_delete'),
+    path('cpe-mappings/<int:pk>/', views.CPEMappingView.as_view(), name='cpemapping'),
+    path('cpe-mappings/<int:pk>/edit/', views.CPEMappingEditView.as_view(), name='cpemapping_edit'),
+    path('cpe-mappings/<int:pk>/delete/', views.CPEMappingDeleteView.as_view(), name='cpemapping_delete'),
+    path('cpe-mappings/<int:pk>/', include(get_model_urls(app_name, 'cpemapping'))),
+    path('cpe-lookup/', cpe_lookup.CPELookupView.as_view(), name='cpe_lookup'),
+
     # Risk URLs
     path("risk/", views.RiskListView.as_view(), name="risk_list"),
     path("risk/add/", views.RiskEditView.as_view(), name="risk_add"),

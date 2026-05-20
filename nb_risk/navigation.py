@@ -103,5 +103,29 @@ menu = PluginMenu(
                 ),
             ),
         ),
+        (
+            "CVE Integration",
+            (
+                PluginMenuItem(
+                    permissions=["nb_risk.view_cpemapping"],
+                    link="plugins:nb_risk:cpemapping_list",
+                    link_text="CPE Mappings",
+                    buttons=(
+                        PluginMenuButton(
+                            "plugins:nb_risk:cpemapping_add",
+                            "Add",
+                            "mdi mdi-plus-thick",
+                            permissions=["nb_risk.add_cpemapping"],
+                        ),
+                        PluginMenuButton(
+                            "plugins:nb_risk:cpe_lookup",
+                            "Lookup",
+                            "mdi mdi-magnify",
+                            permissions=["nb_risk.add_cpemapping"],
+                        ),
+                    ),
+                ),
+            ),
+        ),
     ),
 )

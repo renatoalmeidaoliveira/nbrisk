@@ -93,3 +93,18 @@ class ControlFilterSet(NetBoxModelFilterSet):
             "category",
             "risk",
         ]
+
+# CPEMapping FilterSet
+
+class CPEMappingFilterSet(NetBoxModelFilterSet):
+    platform_id = django_filters.ModelMultipleChoiceFilter(
+        queryset=__import__('dcim.models', fromlist=['Platform']).Platform.objects.all(),
+    )
+    device_type_id = django_filters.ModelMultipleChoiceFilter(
+        queryset=__import__('dcim.models', fromlist=['DeviceType']).DeviceType.objects.all(),
+    )
+    verified = django_filters.BooleanFilter()
+
+    class Meta:
+        model = models.CPEMapping
+        fields = ['platform_id', 'device_type_id', 'cpe_vendor', 'cpe_product', 'cpe_part', 'verified']

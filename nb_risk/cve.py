@@ -7,6 +7,7 @@ from utilities.views import ViewTab, register_model_view
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
 from django.conf import settings
+from django.urls import reverse
 
 from django.views.generic import View
 from django.shortcuts import redirect, render
@@ -334,6 +335,43 @@ def _normalize_cpe_version(value):
     return full, fallback or None
 
 
+def _get_cpes_from_mapping(device, full_version, fallback_version):
+    """
+    Look up CPEMapping records for this device's platform or device_type.
+    Returns a list of (cpe_string, label) tuples ready for NVD queries.
+    Device type mappings take precedence over platform mappings.
+    """
+    # Import here to avoid circular import at module load
+    from .models import CPEMapping
+
+    cpes = []
+    mappings = []
+
+    # Device type is most specific — check first
+    if device.device_type:
+        mappings = list(CPEMapping.objects.filter(device_type=device.device_type))
+
+    # Fall back to platform
+    if not mappings and device.platform:
+        mappings = list(CPEMapping.objects.filter(platform=device.platform))
+
+    if not mappings:
+        return []
+
+    versions_to_try = [(full_version, "")]
+    if fallback_version:
+        versions_to_try.append((fallback_version, " [major.minor fallback]"))
+
+    for mapping in mappings:
+        scope = str(mapping.platform or mapping.device_type)
+        verified_tag = " [verified]" if mapping.verified else ""
+        for version, ver_suffix in versions_to_try:
+            cpe = mapping.build_cpe(version)
+            cpes.append((cpe, f"{scope}{verified_tag}{ver_suffix}"))
+
+    return cpes
+
+
 def _build_device_cpes(device):
     """
     Build a list of CPE 2.3 strings to query NVD for a given device.
@@ -494,7 +532,21 @@ def get_device_cves(device, return_url=""):
 
     Returns (cve_list, cpes_used) tuple.
     """
-    cpes = _build_device_cpes(device)
+    # Get version components first
+    raw_version = device.custom_field_data.get(SW_TRACKER_CF)
+    if raw_version:
+        full_version, fallback_version = _normalize_cpe_version(str(raw_version))
+    else:
+        full_version, fallback_version = "*", None
+
+    # Try CPEMapping records first (user-verified, precise)
+    cpes = _get_cpes_from_mapping(device, full_version, fallback_version)
+    using_mapping = bool(cpes)
+
+    # Fall back to heuristic CPE generation if no mappings configured
+    if not cpes:
+        cpes = _build_device_cpes(device)
+
     if not cpes:
         return [], []
 
@@ -586,12 +638,21 @@ class DeviceCVEView(generic.ObjectView):
     )
 
     def get_extra_context(self, request, instance):
+        from .models import CPEMapping
         sw_version = instance.custom_field_data.get(SW_TRACKER_CF)
         return_url = request.build_absolute_uri()
 
         cves, cpes_used = [], []
         if sw_version:
             cves, cpes_used = get_device_cves(instance, return_url)
+
+        # Check if a CPE mapping exists for this device
+        has_mapping = CPEMapping.objects.filter(
+            device_type=instance.device_type
+        ).exists() or (
+            instance.platform and
+            CPEMapping.objects.filter(platform=instance.platform).exists()
+        )
 
         table = tables.CveTable(cves)
 
@@ -601,4 +662,7 @@ class DeviceCVEView(generic.ObjectView):
             "cpes_used": cpes_used,
             "sw_version": sw_version,
             "sw_tracker_cf": SW_TRACKER_CF,
+            "has_mapping": has_mapping,
+            "cpe_lookup_url": reverse('plugins:nb_risk:cpe_lookup'),
+            "cpemapping_add_url": reverse('plugins:nb_risk:cpemapping_add'),
         }
