@@ -465,14 +465,16 @@ def get_device_cves(device, return_url=""):
             seen.add(r["id"])
             deduped.append(r)
 
-    # If no CPE queries matched, fall back to keyword search
+    # If no CPE queries matched, fall back to keyword search.
+    # Use manufacturer + platform + model for the tightest possible match.
     if not deduped and not cpes_used:
         try:
-            vendor = _normalize_cpe_component(device.device_type.manufacturer.name)
-            product = _normalize_cpe_component(
-                device.platform.name if device.platform else device.device_type.model
-            )
-            keyword = f"{vendor} {product}"
+            manufacturer = device.device_type.manufacturer.name
+            platform = device.platform.name if device.platform else ""
+            model = device.device_type.model
+            # Build progressively specific keyword: "Cisco NX-OS Nexus 9396PX"
+            keyword_parts = [p for p in [manufacturer, platform, model] if p]
+            keyword = " ".join(keyword_parts)
             r = requests.get(
                 NVD_CVE_URI,
                 params={"keywordSearch": keyword, "resultsPerPage": 20},
@@ -483,7 +485,7 @@ def get_device_cves(device, return_url=""):
             r.raise_for_status()
             entries = r.json().get("vulnerabilities", [])
             if entries:
-                cpes_used.append((f"keyword: {keyword}", "Keyword fallback", len(entries)))
+                cpes_used.append((f"keyword: {keyword}", "Keyword fallback (version not in NVD CPE dictionary)", len(entries)))
                 deduped = _parse_cve_entries(entries, return_url)
         except Exception as e:
             logger.warning("NVD keyword fallback failed: %s", e)

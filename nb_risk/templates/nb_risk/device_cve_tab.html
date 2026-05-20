@@ -46,6 +46,24 @@
       </div>
 
     {% else %}
+      {% for cpe, label, count in cpes_used %}
+        {% if "fallback" in label|lower %}
+        <div class="alert alert-warning" role="alert">
+          <h5 class="alert-heading"><i class="mdi mdi-alert-outline"></i> Broad keyword results — not version-specific</h5>
+          <p>
+            Version <strong>{{ sw_version }}</strong> is not yet in the NVD CPE dictionary.
+            Results below are matched by keyword (<code>{{ cpe|slice:"8:" }}</code>) and may include CVEs
+            for <strong>other versions or device models</strong>. Use them as a reference only.
+          </p>
+          <p class="mb-0 small text-muted">
+            NVD CPE coverage for this version will improve over time as Cisco publishes advisories.
+            Check <a href="https://tools.cisco.com/security/center/publicationListing.x" target="_blank">Cisco Security Advisories</a>
+            for version-specific vulnerabilities.
+          </p>
+        </div>
+        {% endif %}
+      {% endfor %}
+
       <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
           <strong><i class="mdi mdi-shield-alert-outline text-danger"></i> CVEs for {{ object.name }} — {{ sw_version }}</strong>
