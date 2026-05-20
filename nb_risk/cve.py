@@ -395,6 +395,58 @@ def _build_device_cpes(device):
 NVD_CACHE_TIMEOUT = 6 * 60 * 60
 
 
+def _extract_product_family(model):
+    """
+    Extract a product family string from a device model name for use
+    in NVD keyword searches. Strips specific suffixes to get the series.
+
+    e.g. 'Nexus 9396PX'     -> 'Nexus 9000'
+         'Nexus 5672UP'     -> 'Nexus 5000'
+         'ASR 1001-X'       -> 'ASR 1001'
+         'Catalyst 9300-48P'-> 'Catalyst 9300'
+         'C9300-48P'        -> 'Catalyst 9300'
+    """
+    if not model:
+        return None
+
+    # Nexus series: extract series number and round to nearest thousand
+    # e.g. 'Nexus 9396PX' -> series 9000, 'Nexus 5672UP' -> 5000
+    nexus_match = re.search(r'[Nn]exus\s*(\d)(\d{3})', model)
+    if nexus_match:
+        series = nexus_match.group(1) + '000'
+        return f"Nexus {series}"
+
+    # Bare Nexus model numbers like 'N9K-C9396PX'
+    n_series_match = re.search(r'[Nn](\d)K', model)
+    if n_series_match:
+        series = n_series_match.group(1) + '000'
+        return f"Nexus {series}"
+
+    # Catalyst: 'Catalyst 9300-48P' or 'C9300-48P' -> 'Catalyst 9300'
+    catalyst_match = re.search(r'(?:[Cc]atalyst\s*|[Cc])(\d{4})', model)
+    if catalyst_match:
+        return f"Catalyst {catalyst_match.group(1)}"
+
+    # ASR: 'ASR 1001-X' -> 'ASR 1001'
+    asr_match = re.search(r'ASR\s*(\d+)', model, re.IGNORECASE)
+    if asr_match:
+        return f"ASR {asr_match.group(1)}"
+
+    # ISR: 'ISR 4321' -> 'ISR 4000'
+    isr_match = re.search(r'ISR\s*(\d)(\d{3})', model, re.IGNORECASE)
+    if isr_match:
+        series = isr_match.group(1) + '000'
+        return f"ISR {series}"
+
+    # Firepower: 'FPR-2140' -> 'Firepower 2100'
+    fpr_match = re.search(r'(?:FPR|Firepower)[\s-]*(\d)(\d{2})', model, re.IGNORECASE)
+    if fpr_match:
+        series = fpr_match.group(1) + '00'
+        return f"Firepower {series}"
+
+    return None
+
+
 def _fetch_cve_by_cpe(cpe_string, label, headers, proxies, return_url):
     """Fetch CVEs for a single CPE string. Designed for parallel execution."""
     try:
@@ -466,14 +518,18 @@ def get_device_cves(device, return_url=""):
             deduped.append(r)
 
     # If no CPE queries matched, fall back to keyword search.
-    # Use manufacturer + platform + model for the tightest possible match.
+    # Use manufacturer + platform + product family (not specific model) for best NVD coverage.
     if not deduped and not cpes_used:
         try:
             manufacturer = device.device_type.manufacturer.name
             platform = device.platform.name if device.platform else ""
             model = device.device_type.model
-            # Build progressively specific keyword: "Cisco NX-OS Nexus 9396PX"
-            keyword_parts = [p for p in [manufacturer, platform, model] if p]
+            # Try to extract a product family from the model name.
+            # e.g. "Nexus 9396PX" -> "Nexus 9000"
+            #      "ASR 1001-X"   -> "ASR 1000"
+            #      "Catalyst 9300-48P" -> "Catalyst 9300"
+            family = _extract_product_family(model)
+            keyword_parts = [p for p in [manufacturer, platform, family or model] if p]
             keyword = " ".join(keyword_parts)
             r = requests.get(
                 NVD_CVE_URI,
