@@ -77,15 +77,17 @@
                   </td>
                   <td class="text-nowrap">
                     {% if cve.baseScore %}
-                      {% if cve.baseScore >= 9.0 %}
+                      {% with score=cve.baseScore|floatformat:1 %}
+                      {% if cve.baseScore >= 9 %}
                         <span class="badge bg-danger">{{ cve.baseScore }}</span>
-                      {% elif cve.baseScore >= 7.0 %}
+                      {% elif cve.baseScore >= 7 %}
                         <span class="badge bg-warning text-dark">{{ cve.baseScore }}</span>
-                      {% elif cve.baseScore >= 4.0 %}
+                      {% elif cve.baseScore >= 4 %}
                         <span class="badge bg-info text-dark">{{ cve.baseScore }}</span>
                       {% else %}
                         <span class="badge bg-secondary">{{ cve.baseScore }}</span>
                       {% endif %}
+                      {% endwith %}
                     {% else %}&mdash;{% endif %}
                   </td>
                   <td>{{ cve.accessVector|default:"&mdash;" }}</td>
