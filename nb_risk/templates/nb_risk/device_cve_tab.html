@@ -22,28 +22,41 @@
       </div>
 
     {% elif not cves %}
+      {% if has_mapping %}
       <div class="alert alert-success" role="alert">
         <h5 class="alert-heading">
-          <i class="mdi mdi-shield-check"></i> No CVEs found
+          <i class="mdi mdi-shield-check"></i> No CVEs found for this version
         </h5>
         <p>
-          No CVEs were found on NVD for software version <strong>{{ sw_version }}</strong>.
+          NVD has no CVEs on record for version <strong>{{ sw_version }}</strong> using the configured CPE mapping.
+          This may mean:
         </p>
-        {% if cpes_used %}
-        <p>CPE queries that returned results:</p>
-        <ul>
-          {% for cpe, label, count in cpes_used %}
-            <li><code>{{ cpe }}</code> &mdash; {{ label }}</li>
-          {% endfor %}
+        <ul class="mb-0">
+          <li>This version is genuinely unaffected by known CVEs</li>
+          <li>NVD hasn't catalogued this version yet — check back as coverage improves</li>
+          <li>The CPE mapping may need refinement —
+            <a href="{{ cpe_lookup_url }}">verify at NVD CPE Search</a></li>
         </ul>
-        {% else %}
-        <p class="mb-0 text-muted small">
-          No CPE queries returned results. CPE matching requires exact vendor/product alignment with NVD.
-          Try searching manually on the <a href="{% url 'plugins:nb_risk:vulnerability_search' %}">CVE Search</a> page
-          or verify names at <a href="https://nvd.nist.gov/products/cpe/search" target="_blank">NVD CPE Search</a>.
-        </p>
-        {% endif %}
       </div>
+      {% else %}
+      <div class="alert alert-warning" role="alert">
+        <h5 class="alert-heading">
+          <i class="mdi mdi-map-marker-alert-outline"></i> No CPE Mapping configured
+        </h5>
+        <p>
+          No verified CPE Mapping exists for this device's platform or device type.
+          Without a mapping, CVE lookups cannot be performed reliably.
+        </p>
+        <div class="d-flex gap-2">
+          <a href="{{ cpe_lookup_url }}" class="btn btn-sm btn-primary">
+            <i class="mdi mdi-magnify"></i> Look up CPE
+          </a>
+          <a href="{{ cpemapping_add_url }}" class="btn btn-sm btn-outline-secondary">
+            <i class="mdi mdi-plus-thick"></i> Add Mapping manually
+          </a>
+        </div>
+      </div>
+      {% endif %}
 
     {% else %}
       {% if not has_mapping %}
@@ -65,22 +78,7 @@
       </div>
       {% endif %}
 
-      {% for cpe, label, count in cpes_used %}
-        {% if "fallback" in label|lower %}
-        <div class="alert alert-info" role="alert">
-          <h5 class="alert-heading"><i class="mdi mdi-information-outline"></i> Keyword fallback — version not in NVD CPE dictionary</h5>
-          <p>
-            Version <strong>{{ sw_version }}</strong> is not yet catalogued in NVD.
-            Results are matched by keyword (<code>{{ cpe|slice:"8:" }}</code>) and may include CVEs
-            for <strong>other versions or device models</strong>.
-          </p>
-          <p class="mb-0 small text-muted">
-            NVD coverage improves over time as vendors publish advisories.
-            Check the vendor's security advisory portal for version-specific vulnerabilities.
-          </p>
-        </div>
-        {% endif %}
-      {% endfor %}
+
 
       <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
