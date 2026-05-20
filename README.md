@@ -7,7 +7,7 @@
 
 | NBRisk Version | NetBox Version | Python |
 |---|---|---|
-| 45.0.0 (this fork) | 4.5.x | 3.12+ |
+| 45.5.0 (this fork) | 4.5.x | 3.12+ |
 | 41.0.2 (upstream) | 4.1.x | 3.10+ |
 | upstream | 4.0.x | 3.10+ |
 | upstream | 3.5.8 – 3.7.x | 3.8+ |
@@ -16,25 +16,27 @@
 
 ## Installation
 
-The recommended approach is to install directly from this fork. To ensure the plugin is automatically re-installed during future NetBox upgrades, add it to your `local_requirements.txt`:
+Add to `local_requirements.txt` to ensure automatic re-installation during NetBox upgrades:
 
 ```shell
 echo "git+https://github.com/droolingtaz/nbrisk.git@main#egg=NbRisk" >> /opt/netbox/local_requirements.txt
 ```
 
-Then install and migrate:
+Install, migrate, and run the initial data syncs:
 
 ```shell
 source /opt/netbox/venv/bin/activate
 pip install "git+https://github.com/droolingtaz/nbrisk.git@main#egg=NbRisk"
 cd /opt/netbox/netbox
 python3 manage.py migrate nb_risk
+python3 manage.py sync_kev       # sync CISA Known Exploited Vulnerabilities catalog
+python3 manage.py sync_epss      # sync EPSS exploit prediction scores
 sudo systemctl restart netbox netbox-rq
 ```
 
 ## Enabling the Plugin
 
-Add the plugin to your `configuration.py`:
+Add to `configuration.py`:
 
 ```python
 PLUGINS = ["nb_risk"]
@@ -42,12 +44,13 @@ PLUGINS = ["nb_risk"]
 
 ## Configuration
 
-All configuration goes in the `PLUGINS_CONFIG` section of `configuration.py`:
+All configuration goes in `PLUGINS_CONFIG` in `configuration.py`:
 
 ```python
 PLUGINS_CONFIG = {
     'nb_risk': {
-        # NVD API key — strongly recommended to avoid rate limiting (5 req/30s without, 50/30s with)
+        # NVD API key — strongly recommended to avoid rate limiting
+        # 5 req/30s without a key, 50 req/30s with one
         # Get a free key at https://nvd.nist.gov/developers/request-an-api-key
         'nvd_api_key': 'your-api-key-here',
 
@@ -62,11 +65,11 @@ PLUGINS_CONFIG = {
 
 ### NVD API Key
 
-The CVE search feature queries the [NIST NVD API](https://nvd.nist.gov/developers/vulnerabilities). Without an API key requests are rate-limited to 5 per 30 seconds; with a key the limit is 50 per 30 seconds. A free key can be requested at [nvd.nist.gov/developers/request-an-api-key](https://nvd.nist.gov/developers/request-an-api-key).
+The CVE search feature queries the [NIST NVD API](https://nvd.nist.gov/developers/vulnerabilities). Without an API key requests are rate-limited to 5 per 30 seconds; with a key the limit is 50 per 30 seconds. Get a free key at [nvd.nist.gov/developers/request-an-api-key](https://nvd.nist.gov/developers/request-an-api-key).
 
 ### Proxy Settings
 
-The plugin uses NetBox's built-in `HTTP_PROXIES` setting from `configuration.py` for all NVD API requests — no additional plugin configuration is needed:
+The plugin uses NetBox's built-in `HTTP_PROXIES` setting from `configuration.py` for all external API requests (NVD, CISA KEV, EPSS) — no separate proxy config needed:
 
 ```python
 HTTP_PROXIES = {
@@ -75,82 +78,27 @@ HTTP_PROXIES = {
 }
 ```
 
-### Additional Assets
-
-To assign vulnerabilities to additional models beyond the defaults (`dcim.device`, `virtualization.virtualmachine`, `tenancy.tenant`, `dcim.site`), add them via `additional_assets` in `PLUGINS_CONFIG`:
-
-```python
-PLUGINS_CONFIG = {
-    'nb_risk': {
-        'additional_assets': [
-            'dcim.platform',
-        ],
-    },
-}
-```
-
-Multiple models can be listed:
-
-```python
-PLUGINS_CONFIG = {
-    'nb_risk': {
-        'additional_assets': [
-            'dcim.platform',
-            'dcim.rack',
-        ],
-    },
-}
-```
-
-## Development
-
-A Docker Compose development environment is included. It spins up NetBox 4.5.9 with the plugin installed in editable mode alongside PostgreSQL 15 and Redis 7.
-
-```shell
-# Build the development containers
-make cbuild
-
-# Start in the foreground (with logs)
-make debug
-
-# Start in the background
-make start
-
-# Stop
-make stop
-
-# Destroy (including database volume)
-make destroy
-
-# Open a NetBox shell
-make nbshell
-
-# Create a superuser
-make adduser
-
-# Generate migrations after model changes
-make migrations
-
-# Run tests
-make test
-```
+---
 
 ## Device CVE Tab
 
-When [netbox-software-tracker](https://github.com/zerogravitas/netbox-software-tracker) is installed and the `software_version` custom field is populated on a device, a **CVEs** tab appears on the Device detail page. It automatically queries the NIST NVD API for CVEs matching the device's running software.
+A **CVEs** tab appears on every Device detail page. It queries NVD for CVEs matching the device's running software and cross-references results against the CISA KEV catalog and EPSS scores.
 
-### How it works
+### Requirements
 
-1. Reads the `software_version` custom field from the device
-2. Builds CPE 2.3 strings using the device's manufacturer, platform name (preferred), and device type model
-3. Queries NVD for both `o` (OS/firmware) and `a` (application) part types
-4. Deduplicates results and displays them with colour-coded CVSS scores and a one-click Import button
+- The `software_version` custom field must be set on the device (created automatically on first install, or manually via `manage.py shell`)
+- A **CPE Mapping** must exist for the device's platform or device type (see below)
 
-### CPE normalization
+### CVE result columns
 
-Manufacturer and product names are normalized automatically for NVD compatibility — lowercased and spaces/hyphens replaced with underscores. For example, `Cisco Systems` → `cisco_systems`, `IOS-XE` → `ios_xe`.
-
-A **CPE Queries** panel at the bottom of the tab shows exactly what was sent to NVD. If you expect results but none appear, use the [NVD CPE Search](https://nvd.nist.gov/products/cpe/search) to verify the vendor/product names match NVD's dictionary.
+| Column | Source | Description |
+|---|---|---|
+| CVE ID | NVD | Links to nvd.nist.gov |
+| KEV | CISA | Red badge if actively exploited in the wild |
+| EPSS | FIRST.org | Probability of exploitation in next 30 days |
+| CVSS | NVD | Version and base score with colour coding |
+| Attack Vector | NVD | Network, Adjacent, Local, Physical |
+| Import | — | One-click import into Vulnerabilities |
 
 ### CVSS score colours
 
@@ -161,9 +109,112 @@ A **CPE Queries** panel at the bottom of the tab shows exactly what was sent to 
 | 4.0–6.9 | 🔵 Medium |
 | Below 4.0 | ⚪ Low |
 
-### Configuration
+### EPSS score colours
 
-The `software_version` custom field name is configurable via the `netbox_software_tracker` plugin settings (default: `software_version`). No additional configuration is needed in `nb_risk`.
+| Score | Meaning |
+|---|---|
+| ≥ 0.5 | 🔴 High exploitation probability |
+| ≥ 0.1 | 🟡 Moderate exploitation probability |
+| ≥ 0.01 | 🔵 Low exploitation probability |
+| < 0.01 | ⚪ Very low exploitation probability |
+
+---
+
+## CPE Mappings
+
+CPE Mappings are the key to accurate, vendor-agnostic CVE matching. They map a NetBox **Platform** or **Device Type** to a verified NVD CPE 2.3 string. Without a mapping, CVE lookups cannot be performed reliably.
+
+### CPE Lookup Assistant
+
+Go to **Risk Assessment → CVE Integration → CPE Mappings → Lookup** to search the NVD CPE dictionary by keyword and create mappings with one click.
+
+### Common platform mappings
+
+| Platform | CPE Vendor | CPE Product | Part | Target SW |
+|---|---|---|---|---|
+| NX-OS | cisco | nx-os | o | nexus_9000_series |
+| IOS-XE | cisco | ios_xe | o | |
+| IOS | cisco | ios | o | |
+| Junos | juniper | junos | o | |
+| EOS | arista | eos | o | |
+| PAN-OS | paloaltonetworks | pan-os | o | |
+| FortiOS | fortinet | fortios | o | |
+| Ubuntu 22.04 | canonical | ubuntu_linux | o | |
+| Windows Server 2022 | microsoft | windows_server_2022 | o | |
+
+The **Target SW** field (8th CPE component) scopes results to a specific platform family. For example `nexus_9000_series` returns only CVEs specifically affecting Nexus 9000 switches rather than all NX-OS CVEs.
+
+---
+
+## CISA KEV Integration
+
+The [CISA Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) catalog lists CVEs actively exploited in the wild. The plugin cross-references this automatically.
+
+### Sync command
+
+```shell
+python3 manage.py sync_kev           # sync all Vulnerability records
+python3 manage.py sync_kev --dry-run # preview without changes
+```
+
+Run this daily — the KEV catalog is updated by CISA as new exploits are confirmed.
+
+---
+
+## EPSS Integration
+
+[FIRST.org EPSS](https://www.first.org/epss/) (Exploit Prediction Scoring System) provides a daily-updated probability score (0.0–1.0) that a CVE will be exploited in the next 30 days. No API key required.
+
+### Sync command
+
+```shell
+python3 manage.py sync_epss           # sync all Vulnerability records
+python3 manage.py sync_epss --dry-run # preview scores without changes
+```
+
+EPSS scores are also fetched in real-time for CVE Search results and the Device CVE tab, with 24-hour per-CVE Redis caching.
+
+### Prioritization framework
+
+Combining all three signals:
+
+| Signal | Meaning |
+|---|---|
+| **KEV** | Already being exploited — remediate immediately |
+| **High EPSS (≥ 0.5)** | High probability of exploitation soon |
+| **High CVSS (≥ 9.0)** | Critical severity |
+| All three | Highest priority — act now |
+
+---
+
+## Management Commands
+
+| Command | Description |
+|---|---|
+| `manage.py sync_kev` | Sync CISA KEV catalog against Vulnerability records |
+| `manage.py sync_kev --dry-run` | Preview KEV matches without changes |
+| `manage.py sync_epss` | Sync EPSS scores for all Vulnerability records |
+| `manage.py sync_epss --dry-run` | Preview EPSS scores without changes |
+
+---
+
+## Development
+
+A Docker Compose development environment is included. It spins up NetBox 4.5.9 with the plugin installed in editable mode alongside PostgreSQL 15 and Redis 7.
+
+```shell
+make cbuild     # build containers
+make debug      # start in foreground
+make start      # start in background
+make stop       # stop
+make destroy    # destroy including database
+make nbshell    # open NetBox shell
+make adduser    # create superuser
+make migrations # generate migrations after model changes
+make test       # run tests
+```
+
+---
 
 ## Screenshots
 
