@@ -16,9 +16,12 @@ from utilities.permissions import get_permission_for_model
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
 
+import hashlib
 import logging
 import re
 import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -388,39 +391,71 @@ def _build_device_cpes(device):
     return cpes
 
 
+# Cache timeout for NVD results — 6 hours
+NVD_CACHE_TIMEOUT = 6 * 60 * 60
+
+
+def _fetch_cve_by_cpe(cpe_string, label, headers, proxies, return_url):
+    """Fetch CVEs for a single CPE string. Designed for parallel execution."""
+    try:
+        r = requests.get(
+            NVD_CVE_URI,
+            params={"cpeName": cpe_string},
+            headers=headers,
+            proxies=proxies,
+            timeout=8,
+        )
+        r.raise_for_status()
+        entries = r.json().get("vulnerabilities", [])
+        if entries:
+            return (cpe_string, label, _parse_cve_entries(entries, return_url))
+    except Exception as e:
+        logger.warning("NVD CVE lookup failed for CPE %s: %s", cpe_string, e)
+    return None
+
+
 def get_device_cves(device, return_url=""):
     """
     Query NVD for CVEs affecting the given device based on its
     software version (from the netbox_software_tracker custom field),
     manufacturer, and platform/device type.
 
-    Returns a list of parsed CVE dicts ready for CveTable.
+    Results are cached in Redis for NVD_CACHE_TIMEOUT seconds to avoid
+    repeated API calls on page reload. CPE queries run in parallel.
+
+    Returns (cve_list, cpes_used) tuple.
     """
     cpes = _build_device_cpes(device)
     if not cpes:
         return [], []
+
+    # Build a stable cache key from the device's CPE strings
+    cache_key = "nb_risk:device_cves:" + hashlib.md5(
+        "|".join(cpe for cpe, _ in cpes).encode()
+    ).hexdigest()
+
+    cached = cache.get(cache_key)
+    if cached is not None:
+        logger.debug("nb_risk: cache hit for device %s CVEs", device.pk)
+        return cached
 
     proxies = _get_proxies()
     headers = _get_nvd_headers()
     results = []
     cpes_used = []
 
-    for cpe_string, label in cpes:
-        try:
-            r = requests.get(
-                NVD_CVE_URI,
-                params={"cpeName": cpe_string},
-                headers=headers,
-                proxies=proxies,
-                timeout=15,
-            )
-            r.raise_for_status()
-            entries = r.json().get("vulnerabilities", [])
-            if entries:
+    # Run all CPE queries in parallel
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        futures = {
+            executor.submit(_fetch_cve_by_cpe, cpe, label, headers, proxies, return_url): (cpe, label)
+            for cpe, label in cpes
+        }
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                cpe_string, label, entries = result
                 cpes_used.append((cpe_string, label, len(entries)))
-                results.extend(_parse_cve_entries(entries, return_url))
-        except Exception as e:
-            logger.warning("NVD CVE lookup failed for CPE %s: %s", cpe_string, e)
+                results.extend(entries)
 
     # Deduplicate by CVE ID, preserving order
     seen = set()
@@ -430,8 +465,7 @@ def get_device_cves(device, return_url=""):
             seen.add(r["id"])
             deduped.append(r)
 
-    # If no CPE queries matched, fall back to keyword search using
-    # vendor + platform/model so the user gets something useful
+    # If no CPE queries matched, fall back to keyword search
     if not deduped and not cpes_used:
         try:
             vendor = _normalize_cpe_component(device.device_type.manufacturer.name)
@@ -444,7 +478,7 @@ def get_device_cves(device, return_url=""):
                 params={"keywordSearch": keyword, "resultsPerPage": 20},
                 headers=headers,
                 proxies=proxies,
-                timeout=15,
+                timeout=8,
             )
             r.raise_for_status()
             entries = r.json().get("vulnerabilities", [])
@@ -454,7 +488,9 @@ def get_device_cves(device, return_url=""):
         except Exception as e:
             logger.warning("NVD keyword fallback failed: %s", e)
 
-    return deduped, cpes_used
+    result_tuple = (deduped, cpes_used)
+    cache.set(cache_key, result_tuple, NVD_CACHE_TIMEOUT)
+    return result_tuple
 
 
 @register_model_view(Device, name='device_cve')
