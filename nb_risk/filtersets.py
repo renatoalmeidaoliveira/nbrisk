@@ -25,6 +25,7 @@ class ThreatEventFilterSet(NetBoxModelFilterSet):
 
 
 class VulnerabilityFilterSet(NetBoxModelFilterSet):
+    in_kev = django_filters.BooleanFilter()
 
     class Meta:
         model = models.Vulnerability
@@ -32,6 +33,7 @@ class VulnerabilityFilterSet(NetBoxModelFilterSet):
             "id",
             "name",
             "cve",
+            "in_kev",
             "description",
             "notes",
             "cvssaccessVector",

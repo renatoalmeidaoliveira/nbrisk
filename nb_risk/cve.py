@@ -27,6 +27,7 @@ from django.core.cache import cache
 logger = logging.getLogger(__name__)
 
 from . import forms, models, tables
+from .kev import enrich_cve_results
 
 NVD_CVE_URI = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 NVD_CPE_URI = "https://services.nvd.nist.gov/rest/json/cpes/2.0"
@@ -276,11 +277,13 @@ def get_cves(request):
 
         if query["type"] == "cpe":
             entries = data.get("products", [])
-            return _parse_cpe_entries(entries, return_url)
+            results = _parse_cpe_entries(entries, return_url)
         else:
             entries = data.get("vulnerabilities", [])
-            return _parse_cve_entries(entries, return_url)
+            results = _parse_cve_entries(entries, return_url)
 
+        enrich_cve_results(results)
+        return results
     except Exception as e:
         logger.error("NVD API request failed: %s", e)
         return []
@@ -585,6 +588,9 @@ def get_device_cves(device, return_url=""):
         if r["id"] not in seen:
             seen.add(r["id"])
             deduped.append(r)
+
+    # Enrich with KEV status
+    enrich_cve_results(deduped)
 
     result_tuple = (deduped, cpes_used)
     cache.set(cache_key, result_tuple, NVD_CACHE_TIMEOUT)

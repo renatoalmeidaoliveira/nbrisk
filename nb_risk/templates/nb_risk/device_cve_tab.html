@@ -91,6 +91,7 @@
               <thead>
                 <tr>
                   <th>CVE ID</th>
+                  <th>KEV</th>
                   <th>CVSS</th>
                   <th>Score</th>
                   <th>Attack Vector</th>
@@ -103,6 +104,13 @@
                 <tr>
                   <td class="text-nowrap">
                     <a href="https://nvd.nist.gov/vuln/detail/{{ cve.id }}" target="_blank">{{ cve.id }}</a>
+                  </td>
+                  <td class="text-center">
+                    {% if cve.in_kev %}
+                      <span class="badge bg-danger" title="CISA Known Exploited Vulnerability"><i class="mdi mdi-alert"></i> KEV</span>
+                    {% else %}
+                      <span class="text-muted">&mdash;</span>
+                    {% endif %}
                   </td>
                   <td>
                     {% if cve.cvssVersion %}

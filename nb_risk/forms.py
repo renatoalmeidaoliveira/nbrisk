@@ -134,9 +134,10 @@ class VulnerabilityForm(NetBoxModelForm):
 
 class VulnerabilityFilterForm(NetBoxModelFilterSetForm):
     model = models.Vulnerability
+    in_kev = forms.NullBooleanSelect()
 
     class Meta:
-        fields = ["name", "cve"]
+        fields = ["name", "cve", "in_kev"]
 
 
 class VulnerabilitySearchFilterForm(NetBoxModelFilterSetForm):

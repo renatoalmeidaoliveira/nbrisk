@@ -51,6 +51,47 @@ class Vulnerability(NetBoxModel):
     cve = models.CharField("CVE", max_length=100, blank=True)
     description = models.CharField("Description", max_length=100, blank=True)
     notes = models.TextField("Notes", blank=True)
+
+    # CISA KEV fields — populated by sync_kev management command
+    in_kev = models.BooleanField(
+        "In CISA KEV",
+        default=False,
+        help_text="This CVE appears in the CISA Known Exploited Vulnerabilities catalog",
+    )
+    kev_date_added = models.DateField(
+        "KEV Date Added",
+        null=True,
+        blank=True,
+        help_text="Date this CVE was added to the CISA KEV catalog",
+    )
+    kev_ransomware_use = models.CharField(
+        "KEV Ransomware Use",
+        max_length=50,
+        blank=True,
+        help_text="Whether this CVE is known to be used in ransomware campaigns",
+    )
+    kev_required_action = models.TextField(
+        "KEV Required Action",
+        blank=True,
+        help_text="CISA-recommended remediation action",
+    )
+    kev_due_date = models.DateField(
+        "KEV Due Date",
+        null=True,
+        blank=True,
+        help_text="CISA remediation due date for federal agencies",
+    )
+    kev_vendor_project = models.CharField(
+        "KEV Vendor/Project",
+        max_length=200,
+        blank=True,
+    )
+    kev_product = models.CharField(
+        "KEV Product",
+        max_length=200,
+        blank=True,
+    )
+
     cvssaccessVector = models.CharField(
         "Access Vector (AV)", max_length=100, blank=True
     )

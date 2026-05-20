@@ -1,5 +1,15 @@
 # Changelog
 
+## 45.4.0 (20/05/2026)
+
+* Add **CISA KEV integration** — sync the CISA Known Exploited Vulnerabilities catalog against Vulnerability records
+* Add `in_kev`, `kev_date_added`, `kev_ransomware_use`, `kev_required_action`, `kev_due_date`, `kev_vendor_project`, `kev_product` fields to `Vulnerability` model
+* Add `sync_kev` management command (`manage.py sync_kev [--dry-run]`)
+* Add red **KEV** badge to Vulnerability list table, CVE Search results, and Device CVE tab
+* Add `in_kev` filter to Vulnerability list and filter form
+* NVD CVE search and Device CVE tab results are automatically cross-referenced against KEV catalog
+* Add migration `0010_vulnerability_kev_fields`
+
 ## 45.3.0 (20/05/2026)
 
 * Add **CPEMapping model** — maps a NetBox Platform or DeviceType to a verified NVD CPE 2.3 string for precise, vendor-agnostic CVE matching

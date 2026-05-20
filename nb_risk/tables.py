@@ -1,5 +1,6 @@
 import django_tables2 as tables
 from django_tables2.utils import Accessor
+from django.utils.safestring import mark_safe
 
 from netbox.tables import NetBoxTable, columns
 from netbox.tables.columns import ActionsColumn
@@ -32,12 +33,28 @@ class ThreatEventTable(NetBoxTable):
         fields = ["name", "threat_source", "relevance", "likelihood", "impact"]
 
 
+# KEV Badge Column
+
+class KEVColumn(tables.Column):
+    """Renders a red KEV badge when the vulnerability is in the CISA catalog."""
+    attrs = {"td": {"class": "text-center"}}
+
+    def render(self, value):
+        if value:
+            return mark_safe(
+                '<span class="badge bg-danger" title="CISA Known Exploited Vulnerability">'  
+                '<i class="mdi mdi-alert"></i> KEV</span>'
+            )
+        return mark_safe('<span class="text-muted">&mdash;</span>')
+
+
 # Vulnerability Tables
 
 
 class VulnerabilityTable(NetBoxTable):
 
     name = tables.Column(linkify=True)
+    in_kev = KEVColumn(verbose_name='KEV')
     affected = columns.LinkedCountColumn(
         verbose_name="Affected Assets",
         accessor=Accessor("affected_assets"),
@@ -56,7 +73,7 @@ class VulnerabilityTable(NetBoxTable):
 
     class Meta(NetBoxTable.Meta):
         model = models.Vulnerability
-        fields = ["name", "cve", "description", "affected", "cvssbaseScore"]
+        fields = ["name", "cve", "in_kev", "description", "affected", "cvssbaseScore"]
 
 
 # VulnerabilityAssignment Tables
@@ -132,9 +149,23 @@ class RiskTable(NetBoxTable):
 # CVE Tables
 
 
+class InKEVColumn(tables.Column):
+    """Compact KEV indicator for CVE search results."""
+    attrs = {"td": {"class": "text-center text-nowrap"}}
+
+    def render(self, value):
+        if value:
+            return mark_safe(
+                '<span class="badge bg-danger" title="CISA Known Exploited Vulnerability">'  
+                '<i class="mdi mdi-alert"></i> KEV</span>'
+            )
+        return mark_safe('<span class="text-muted">&mdash;</span>')
+
+
 class CveTable(NetBoxTable):
 
     id = tables.Column(attrs={"td": {"class": "text-end text-nowrap"}})
+    in_kev = InKEVColumn(verbose_name='KEV', default=False)
     description = tables.Column()
     baseScore = tables.Column(verbose_name="Base Score")
     cvssVersion = tables.Column(verbose_name="CVSS Version")
@@ -146,6 +177,7 @@ class CveTable(NetBoxTable):
         model = models.Vulnerability
         fields = [
             "id",
+            "in_kev",
             "description",
             "cvssVersion",
             "baseScore",
