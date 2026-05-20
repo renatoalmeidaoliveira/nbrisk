@@ -291,13 +291,14 @@ SW_TRACKER_CF = "software_version"  # custom field name used by netbox_software_
 
 def _normalize_cpe_component(value):
     """
-    Normalize a string to a CPE 2.3 component:
+    Normalize a vendor/product string to a CPE 2.3 component:
     - lowercase
     - replace spaces, hyphens, and slashes with underscores
     - strip any remaining non-alphanumeric/underscore/dot chars
     e.g. 'Cisco Systems' -> 'cisco_systems'
          'IOS-XE'        -> 'ios_xe'
          'C9300-48P'     -> 'c9300_48p'
+    NOTE: use _normalize_cpe_version() for version strings.
     """
     if not value:
         return "*"
@@ -305,6 +306,26 @@ def _normalize_cpe_component(value):
     value = re.sub(r'[\s\-/]+', '_', value)
     value = re.sub(r'[^a-z0-9_.]+', '', value)
     return value or "*"
+
+
+def _normalize_cpe_version(value):
+    """
+    Normalize a software version string for use in CPE 2.3 queries.
+    Preserves Cisco-style parenthetical patch suffixes by percent-encoding
+    them, e.g. '16.1(4h)' -> '16.1\\(4h\\)' which NVD understands.
+    Also returns a stripped major.minor fallback for broader matching.
+    Returns (full_version, fallback_version) tuple.
+    """
+    if not value:
+        return "*", "*"
+    # Escape parentheses for CPE 2.3 WFN format
+    full = value.strip().lower()
+    full = full.replace('(', '\\(').replace(')', '\\)')
+    # Fallback: strip everything after first non-numeric/dot char
+    fallback = re.split(r'[^0-9.]', value.strip())[0].rstrip('.')
+    if fallback == full.replace('\\(', '(').replace('\\)', ')'):
+        fallback = None  # no point querying the same value twice
+    return full, fallback or None
 
 
 def _build_device_cpes(device):
@@ -320,9 +341,12 @@ def _build_device_cpes(device):
     """
     cpes = []
 
-    # Get version from custom field
-    version = device.custom_field_data.get(SW_TRACKER_CF) or "*"
-    version = _normalize_cpe_component(str(version)) if version != "*" else "*"
+    # Get version from custom field — use dedicated version normalizer
+    raw_version = device.custom_field_data.get(SW_TRACKER_CF)
+    if raw_version:
+        full_version, fallback_version = _normalize_cpe_version(str(raw_version))
+    else:
+        full_version, fallback_version = "*", None
 
     # Get vendor
     try:
@@ -343,13 +367,20 @@ def _build_device_cpes(device):
         f"Device Type: {device.device_type.model}"
     ))
 
-    # Generate CPEs for OS ('o') and application ('a') part types
-    # Hardware ('h') is intentionally excluded — most CVEs are software
-    for product, label in products:
-        for part in ('o', 'a'):
-            part_label = 'OS/Firmware' if part == 'o' else 'Application'
-            cpe = f"cpe:2.3:{part}:{vendor}:{product}:{version}:*:*:*:*:*:*:*"
-            cpes.append((cpe, f"{label} [{part_label}]"))
+    # Generate CPEs for OS ('o') and application ('a') part types.
+    # For each product, query the full version first, then a stripped
+    # major.minor fallback (e.g. '16.1' when full is '16.1\(4h\)').
+    # Hardware ('h') is intentionally excluded — most CVEs are software.
+    versions_to_try = [(full_version, "")]
+    if fallback_version and fallback_version != full_version:
+        versions_to_try.append((fallback_version, " [major.minor fallback]"))
+
+    for product, prod_label in products:
+        for version, ver_suffix in versions_to_try:
+            for part in ('o', 'a'):
+                part_label = 'OS/Firmware' if part == 'o' else 'Application'
+                cpe = f"cpe:2.3:{part}:{vendor}:{product}:{version}:*:*:*:*:*:*:*"
+                cpes.append((cpe, f"{prod_label} [{part_label}]{ver_suffix}"))
 
     return cpes
 
