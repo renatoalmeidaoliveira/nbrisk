@@ -373,10 +373,22 @@ def _build_device_cpes(device):
         f"Device Type: {device.device_type.model}"
     ))
 
-    # Generate CPEs for OS ('o') and application ('a') part types.
-    # For each product, query the full version first, then a stripped
-    # major.minor fallback (e.g. '16.1' when full is '16.1\(4h\)').
-    # Hardware ('h') is intentionally excluded — most CVEs are software.
+    # Determine if this is a Nexus device and which series
+    # so we can use the target_sw component in CPE (8th field)
+    nexus_target_sw = None
+    for product, _ in products:
+        family = _extract_product_family(device.device_type.model)
+        if family and 'nexus' in family.lower():
+            series = re.search(r'(\d+)', family)
+            if series:
+                nexus_target_sw = f"nexus_{series.group(1)}_series"
+            break
+
+    # Generate CPEs. For Nexus devices include the target_sw field
+    # (8th component) which NVD uses to scope Nexus-specific entries:
+    #   cpe:2.3:a:cisco:nx-os:{ver}:*:*:*:*:nexus_9000_series:*:*
+    # Also generate generic CPEs as fallback.
+    # Hardware ('h') is intentionally excluded.
     versions_to_try = [(full_version, "")]
     if fallback_version and fallback_version != full_version:
         versions_to_try.append((fallback_version, " [major.minor fallback]"))
@@ -385,6 +397,11 @@ def _build_device_cpes(device):
         for version, ver_suffix in versions_to_try:
             for part in ('o', 'a'):
                 part_label = 'OS/Firmware' if part == 'o' else 'Application'
+                # Nexus-targeted CPE (most specific)
+                if nexus_target_sw:
+                    cpe = f"cpe:2.3:{part}:{vendor}:{product}:{version}:*:*:*:*:{nexus_target_sw}:*:*"
+                    cpes.append((cpe, f"{prod_label} [{part_label}] Nexus-targeted{ver_suffix}"))
+                # Generic CPE
                 cpe = f"cpe:2.3:{part}:{vendor}:{product}:{version}:*:*:*:*:*:*:*"
                 cpes.append((cpe, f"{prod_label} [{part_label}]{ver_suffix}"))
 
