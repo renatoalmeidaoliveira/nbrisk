@@ -14,6 +14,7 @@ from django.shortcuts import redirect, render
 from utilities.views import ObjectPermissionRequiredMixin
 from utilities.permissions import get_permission_for_model
 from netbox.views import generic
+from utilities.views import ViewTab, register_model_view
 
 import logging
 import re
@@ -398,40 +399,37 @@ def get_device_cves(device, return_url=""):
     return deduped, cpes_used
 
 
-class DeviceCVEView(ObjectPermissionRequiredMixin, View):
+@register_model_view(Device, name='device_cve')
+class DeviceCVEView(generic.ObjectView):
     """
     A tab on the Device detail page that queries NVD for CVEs
     matching the device's software version, manufacturer, and platform.
-    Requires netbox_software_tracker to populate the software_version
-    custom field on devices.
+    Requires the software_version custom field to be populated
+    (e.g. by netbox_software_tracker).
     """
     queryset = Device.objects.all()
     template_name = "nb_risk/device_cve_tab.html"
 
-    def get_required_permission(self):
-        return get_permission_for_model(Device, "view")
+    tab = ViewTab(
+        label="CVEs",
+        permission="dcim.view_device",
+        weight=10000,
+    )
 
-    def get(self, request, pk):
-        device = get_object_or_404(Device, pk=pk)
+    def get_extra_context(self, request, instance):
+        sw_version = instance.custom_field_data.get(SW_TRACKER_CF)
         return_url = request.build_absolute_uri()
-        sw_version = device.custom_field_data.get(SW_TRACKER_CF)
 
         cves, cpes_used = [], []
         if sw_version:
-            cves, cpes_used = get_device_cves(device, return_url)
+            cves, cpes_used = get_device_cves(instance, return_url)
 
         table = tables.CveTable(cves)
 
-        return render(
-            request,
-            self.template_name,
-            {
-                "object": device,
-                "table": table,
-                "cves": cves,
-                "cpes_used": cpes_used,
-                "sw_version": sw_version,
-                "sw_tracker_cf": SW_TRACKER_CF,
-                "active_tab": "cve",
-            },
-        )
+        return {
+            "table": table,
+            "cves": cves,
+            "cpes_used": cpes_used,
+            "sw_version": sw_version,
+            "sw_tracker_cf": SW_TRACKER_CF,
+        }

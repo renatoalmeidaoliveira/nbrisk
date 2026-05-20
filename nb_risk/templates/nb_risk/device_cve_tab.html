@@ -6,16 +6,13 @@
   <div class="col">
 
     {% if not sw_version %}
-      {# No software version set on device #}
       <div class="alert alert-info" role="alert">
         <h5 class="alert-heading">
           <i class="mdi mdi-information-outline"></i> No software version tracked
         </h5>
         <p>
           No <code>{{ sw_tracker_cf }}</code> custom field value is set on this device.
-          To enable automatic CVE matching, install
-          <a href="https://github.com/zerogravitas/netbox-software-tracker" target="_blank">netbox-software-tracker</a>
-          and set the <code>{{ sw_tracker_cf }}</code> custom field on this device.
+          Set the <strong>Software Version</strong> custom field on this device to enable automatic CVE matching.
         </p>
         <hr>
         <p class="mb-0">
@@ -25,66 +22,60 @@
       </div>
 
     {% elif not cves %}
-      {# Software version set but no CVEs found #}
       <div class="alert alert-success" role="alert">
         <h5 class="alert-heading">
           <i class="mdi mdi-shield-check"></i> No CVEs found
         </h5>
         <p>
-          No CVEs were found on NVD for software version <strong>{{ sw_version }}</strong>
-          using the following CPE queries:
+          No CVEs were found on NVD for software version <strong>{{ sw_version }}</strong>.
         </p>
-        <ul class="mb-0">
+        {% if cpes_used %}
+        <p>CPE queries that returned results:</p>
+        <ul>
           {% for cpe, label, count in cpes_used %}
             <li><code>{{ cpe }}</code> &mdash; {{ label }}</li>
-          {% empty %}
-            <li>No CPE queries returned results.</li>
           {% endfor %}
         </ul>
-        <hr>
+        {% else %}
         <p class="mb-0 text-muted small">
-          CPE matching depends on exact vendor/product name alignment with NVD.
-          If you expect results, try searching NVD manually with the
-          <a href="{% url 'plugins:nb_risk:vulnerability_search' %}">CVE Search</a> page.
+          No CPE queries returned results. CPE matching requires exact vendor/product alignment with NVD.
+          Try searching manually on the <a href="{% url 'plugins:nb_risk:vulnerability_search' %}">CVE Search</a> page
+          or verify names at <a href="https://nvd.nist.gov/products/cpe/search" target="_blank">NVD CPE Search</a>.
         </p>
+        {% endif %}
       </div>
 
     {% else %}
-      {# CVEs found #}
       <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <strong><i class="mdi mdi-shield-alert-outline text-danger"></i> CVEs for {{ object.name }}</strong>
+          <strong><i class="mdi mdi-shield-alert-outline text-danger"></i> CVEs for {{ object.name }} — {{ sw_version }}</strong>
           <span class="badge bg-danger">{{ cves|length }} found</span>
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-hover table-headings panel-heading mb-0">
+            <table class="table table-hover table-headings mb-0">
               <thead>
                 <tr>
                   <th>CVE ID</th>
-                  <th>CVSS Version</th>
-                  <th>Base Score</th>
+                  <th>CVSS</th>
+                  <th>Score</th>
                   <th>Attack Vector</th>
                   <th>Description</th>
-                  <th>Import</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 {% for cve in cves %}
                 <tr>
-                  <td>
-                    <a href="https://nvd.nist.gov/vuln/detail/{{ cve.id }}" target="_blank">
-                      {{ cve.id }}
-                    </a>
+                  <td class="text-nowrap">
+                    <a href="https://nvd.nist.gov/vuln/detail/{{ cve.id }}" target="_blank">{{ cve.id }}</a>
                   </td>
                   <td>
                     {% if cve.cvssVersion %}
                       <span class="badge bg-secondary">v{{ cve.cvssVersion }}</span>
-                    {% else %}
-                      <span class="text-muted">&mdash;</span>
-                    {% endif %}
+                    {% else %}&mdash;{% endif %}
                   </td>
-                  <td>
+                  <td class="text-nowrap">
                     {% if cve.baseScore %}
                       {% if cve.baseScore >= 9.0 %}
                         <span class="badge bg-danger">{{ cve.baseScore }}</span>
@@ -95,19 +86,15 @@
                       {% else %}
                         <span class="badge bg-secondary">{{ cve.baseScore }}</span>
                       {% endif %}
-                    {% else %}
-                      <span class="text-muted">&mdash;</span>
-                    {% endif %}
+                    {% else %}&mdash;{% endif %}
                   </td>
                   <td>{{ cve.accessVector|default:"&mdash;" }}</td>
                   <td class="text-truncate" style="max-width: 400px;" title="{{ cve.description }}">
                     {{ cve.description }}
                   </td>
-                  <td>
-                    {% url 'plugins:nb_risk:vulnerability_add' as add_url %}
-                    <a href="{{ add_url }}?cve={{ cve.id }}&name={{ cve.id }}&notes={{ cve.description|urlencode }}&cvssbaseScore={{ cve.baseScore }}&cvssaccessVector={{ cve.accessVector }}"
-                       class="btn btn-sm btn-primary"
-                       title="Import as Vulnerability">
+                  <td class="text-nowrap">
+                    <a href="{% url 'plugins:nb_risk:vulnerability_add' %}?cve={{ cve.id }}&name={{ cve.id }}&notes={{ cve.description|urlencode }}&cvssbaseScore={{ cve.baseScore }}&cvssaccessVector={{ cve.accessVector }}"
+                       class="btn btn-sm btn-primary">
                       <i class="mdi mdi-plus-thick"></i> Import
                     </a>
                   </td>
@@ -119,19 +106,17 @@
         </div>
       </div>
 
-      {# CPE queries used #}
       <div class="card">
         <div class="card-header">
           <strong><i class="mdi mdi-magnify"></i> CPE Queries Used</strong>
         </div>
         <div class="card-body">
           <p class="text-muted small mb-2">
-            Software version <strong>{{ sw_version }}</strong> was matched against NVD using these CPE strings.
-            NVD CPE matching requires exact vendor/product alignment — see
-            <a href="https://nvd.nist.gov/products/cpe/search" target="_blank">NVD CPE Search</a>
-            to verify or refine.
+            NVD was queried using these CPE strings derived from the device's manufacturer, platform, and software version.
+            If results look incomplete, verify the vendor/product names at
+            <a href="https://nvd.nist.gov/products/cpe/search" target="_blank">NVD CPE Search</a>.
           </p>
-          <table class="table table-sm">
+          <table class="table table-sm mb-0">
             <thead>
               <tr><th>CPE String</th><th>Source</th><th>CVEs Found</th></tr>
             </thead>

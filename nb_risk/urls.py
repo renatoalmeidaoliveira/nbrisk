@@ -38,9 +38,6 @@ urlpatterns = (
     path('vulnerability/<int:pk>/', include(get_model_urls(app_name, 'vulnerability'))),
     path("vulnerability/search/", cve.VulnerabilitySearchView.as_view(), name="vulnerability_search",),
 
-    # Device Software CVE Tab
-    path("device/<int:pk>/cve/", cve.DeviceCVEView.as_view(), name="device_cve",),
-
     # VulnerabilityAssignment URLs
     path("vulnerability-assignments/add/", views.VulnerabilityAssignmentEditView.as_view(), name="vulnerabilityassignment_add",),
     path("vulnerability-assignments/", views.VulnerabilityAssignmentListView.as_view(), name="vulnerabilityassignment_list",),
