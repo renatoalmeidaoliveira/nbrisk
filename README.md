@@ -5,14 +5,7 @@
 
 ## Compatibility
 
-| NBRisk Version | NetBox Version | Python |
-|---|---|---|
-| 45.5.0 (this fork) | 4.5.x | 3.12+ |
-| 41.0.2 (upstream) | 4.1.x | 3.10+ |
-| upstream | 4.0.x | 3.10+ |
-| upstream | 3.5.8 – 3.7.x | 3.8+ |
-| upstream | 3.5.0 – 3.5.7 | 3.8+ |
-| upstream | 3.4.x | 3.8+ |
+See the [compatibility matrix](COMPATIBILITY.md) for supported NetBox versions.
 
 ## Installation
 
