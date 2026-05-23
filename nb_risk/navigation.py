@@ -125,6 +125,25 @@ menu = PluginMenu(
                         ),
                     ),
                 ),
+                PluginMenuItem(
+                    permissions=["core.view_job"],
+                    link="core:job_list",
+                    link_text="Sync Jobs",
+                    buttons=(
+                        PluginMenuButton(
+                            "plugins:nb_risk:sync_kev",
+                            "Sync KEV",
+                            "mdi mdi-shield-sync",
+                            permissions=["core.add_job"],
+                        ),
+                        PluginMenuButton(
+                            "plugins:nb_risk:sync_epss",
+                            "Sync EPSS",
+                            "mdi mdi-chart-line",
+                            permissions=["core.add_job"],
+                        ),
+                    ),
+                ),
             ),
         ),
     ),

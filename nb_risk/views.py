@@ -1,5 +1,6 @@
 from django.core.exceptions import MultipleObjectsReturned, ValidationError, ObjectDoesNotExist
 from django.contrib.contenttypes.models import ContentType
+from django.views.generic import View
 
 from netbox.views import generic
 from netbox.object_actions import AddObject, BulkDelete, BulkExport, BulkImport
@@ -386,3 +387,30 @@ class CPEMappingBulkDeleteView(generic.BulkDeleteView):
 class CPEMappingImportView(generic.BulkImportView):
     queryset = models.CPEMapping.objects.all()
     model_form = forms.CPEMappingImportForm
+
+
+# Sync Job Trigger Views
+
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.shortcuts import redirect
+from django.contrib import messages
+
+
+class SyncKEVView(PermissionRequiredMixin, View):
+    permission_required = 'core.add_job'
+
+    def get(self, request):
+        from .jobs import SyncKEVJob
+        job = SyncKEVJob.enqueue(name='Sync CISA KEV Catalog', user=request.user)
+        messages.success(request, f'KEV sync job queued (Job #{job.pk}).')
+        return redirect('core:job', pk=job.pk)
+
+
+class SyncEPSSView(PermissionRequiredMixin, View):
+    permission_required = 'core.add_job'
+
+    def get(self, request):
+        from .jobs import SyncEPSSJob
+        job = SyncEPSSJob.enqueue(name='Sync EPSS Scores', user=request.user)
+        messages.success(request, f'EPSS sync job queued (Job #{job.pk}).')
+        return redirect('core:job', pk=job.pk)

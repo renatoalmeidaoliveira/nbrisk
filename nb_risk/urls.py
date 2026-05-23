@@ -58,6 +58,10 @@ urlpatterns = (
     path('cpe-mappings/<int:pk>/', include(get_model_urls(app_name, 'cpemapping'))),
     path('cpe-lookup/', cpe_lookup.CPELookupView.as_view(), name='cpe_lookup'),
 
+    # Sync job triggers
+    path('sync/kev/', views.SyncKEVView.as_view(), name='sync_kev'),
+    path('sync/epss/', views.SyncEPSSView.as_view(), name='sync_epss'),
+
     # Risk URLs
     path("risk/", views.RiskListView.as_view(), name="risk_list"),
     path("risk/add/", views.RiskEditView.as_view(), name="risk_add"),

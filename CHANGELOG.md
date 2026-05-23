@@ -1,5 +1,15 @@
 # Changelog
 
+## 45.6.0 (22/05/2026)
+
+* Migrate `sync_kev` and `sync_epss` to NetBox `JobRunner` background jobs (`SyncKEVJob`, `SyncEPSSJob`)
+* Both jobs run automatically on a daily schedule via the NetBox-RQ worker — no cron required
+* Add **Sync Jobs** menu items under CVE Integration with Sync KEV and Sync EPSS buttons to trigger manually from the UI
+* Management commands (`sync_kev`, `sync_epss`) retained as thin wrappers for CLI access
+* Add test suite: `tests/test_models.py`, `test_api.py`, `test_filtersets.py`, `test_views.py`, `test_kev_epss.py`
+* Add `COMPATIBILITY.md`, `AGENTS.md`, `CLAUDE.md` per NBL plugin catalogue standards
+* Update `README.md` compatibility section to one-liner referencing `COMPATIBILITY.md`
+
 ## 45.5.0 (20/05/2026)
 
 * Add **EPSS integration** — FIRST.org Exploit Prediction Scoring System scores for all CVEs

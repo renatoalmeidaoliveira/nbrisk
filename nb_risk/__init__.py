@@ -28,7 +28,7 @@ class NbriskConfig(PluginConfig):
     }
     
     def ready(self):
-        from . import signals
+        from . import signals, jobs  # noqa: F401 — registers system jobs via @system_job decorator
         super().ready()
 
 config = NbriskConfig  # noqa

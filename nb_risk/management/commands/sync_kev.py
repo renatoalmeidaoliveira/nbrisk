@@ -1,10 +1,9 @@
 """
-Management command to sync the CISA Known Exploited Vulnerabilities
-catalog against the nb_risk Vulnerability model.
+Management command wrapper for SyncKEVJob.
 
-Usage:
-    python manage.py sync_kev
-    python manage.py sync_kev --dry-run
+Prefer triggering via the NetBox UI (Risk Assessment → CVE Integration →
+Sync Jobs) or the background job scheduler. This command is retained for
+environments where direct CLI access is available (bare-metal, dev).
 """
 
 from django.core.management.base import BaseCommand
@@ -12,7 +11,10 @@ from nb_risk.kev import fetch_kev_catalog, sync_kev_to_db
 
 
 class Command(BaseCommand):
-    help = "Sync the CISA Known Exploited Vulnerabilities (KEV) catalog with nb_risk Vulnerabilities"
+    help = (
+        "Sync the CISA Known Exploited Vulnerabilities (KEV) catalog with "
+        "nb_risk Vulnerabilities. Also runs automatically as a daily background job."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(

@@ -1,10 +1,9 @@
 """
-Management command to sync EPSS scores from FIRST.org for all
-Vulnerability records that have a CVE ID.
+Management command wrapper for SyncEPSSJob.
 
-Usage:
-    python manage.py sync_epss
-    python manage.py sync_epss --dry-run
+Prefer triggering via the NetBox UI (Risk Assessment → CVE Integration →
+Sync Jobs) or the background job scheduler. This command is retained for
+environments where direct CLI access is available (bare-metal, dev).
 """
 
 from django.core.management.base import BaseCommand
@@ -13,8 +12,8 @@ from nb_risk.epss import fetch_epss_scores, sync_epss_to_db
 
 class Command(BaseCommand):
     help = (
-        "Sync EPSS (Exploit Prediction Scoring System) scores from FIRST.org "
-        "for all nb_risk Vulnerabilities with a CVE ID"
+        "Sync EPSS scores from FIRST.org for all nb_risk Vulnerabilities "
+        "with a CVE ID. Also runs automatically as a daily background job."
     )
 
     def add_arguments(self, parser):
@@ -37,7 +36,11 @@ class Command(BaseCommand):
             scores = fetch_epss_scores(cve_ids)
 
             self.stdout.write(f"Received scores for {len(scores)} CVEs:\n")
-            for pk, cve, name in sorted(vulns, key=lambda x: scores.get(x[1].upper(), {}).get('epss', 0), reverse=True):
+            for pk, cve, name in sorted(
+                vulns,
+                key=lambda x: scores.get(x[1].upper(), {}).get('epss', 0),
+                reverse=True,
+            ):
                 data = scores.get(cve.upper())
                 if data:
                     self.stdout.write(
