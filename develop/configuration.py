@@ -114,14 +114,6 @@ ENFORCE_GLOBAL_UNIQUE = False
 #   https://docs.djangoproject.com/en/1.11/topics/logging/
 LOGGING = {}
 
-# Setting this to True will permit only authenticated users to access any part of NetBox. By default, anonymous users
-# are permitted to access most data in NetBox (excluding secrets) but not make any changes.
-LOGIN_REQUIRED = False
-
-# Base URL path if accessing NetBox within a directory. For example, if installed at http://example.com/netbox/, set:
-# BASE_PATH = 'netbox/'
-BASE_PATH = os.environ.get("BASE_PATH", "")
-
 # Setting this to True will display a "maintenance mode" banner at the top of every page.
 MAINTENANCE_MODE = os.environ.get("MAINTENANCE_MODE", False)
 
@@ -134,24 +126,12 @@ MAX_PAGE_SIZE = int(os.environ.get("MAX_PAGE_SIZE", 1000))
 # the default value of this setting is derived from the installed location.
 MEDIA_ROOT = os.environ.get("MEDIA_ROOT", os.path.join(BASE_DIR, "media"))
 
-NAPALM_USERNAME = os.environ.get("NAPALM_USERNAME", "")
-NAPALM_PASSWORD = os.environ.get("NAPALM_PASSWORD", "")
-
-# NAPALM timeout (in seconds). (Default: 30)
-NAPALM_TIMEOUT = os.environ.get("NAPALM_TIMEOUT", 30)
-
-# NAPALM optional arguments (see http://napalm.readthedocs.io/en/latest/support/#optional-arguments). Arguments must
-# be provided as a dictionary.
-NAPALM_ARGS = {
-    "secret": NAPALM_PASSWORD,
-    # Include any additional args here
-}
-
 # Determine how many objects to display per page within a list. (Default: 50)
 PAGINATE_COUNT = os.environ.get("PAGINATE_COUNT", 50)
 
 # Enable installed plugins. Add the name of each plugin to the list.
 PLUGINS = ["nb_risk"]
+# PLUGINS = []
 
 # Plugins configuration settings. These settings are used by various plugins that the user may have installed.
 # Each key in the dictionary is the name of an installed plugin and its value is a dictionary of settings.
@@ -169,19 +149,7 @@ REMOTE_AUTH_AUTO_CREATE_USER = True
 REMOTE_AUTH_DEFAULT_GROUPS = []
 REMOTE_AUTH_DEFAULT_PERMISSIONS = {}
 
-# This determines how often the GitHub API is called to check the latest release of NetBox. Must be at least 1 hour.
-RELEASE_CHECK_TIMEOUT = 24 * 3600
-
-# This repository is used to check whether there is a new release of NetBox available. Set to None to disable the
-# version check or use the URL below to check for release in the official NetBox repository.
-RELEASE_CHECK_URL = None
-# RELEASE_CHECK_URL = 'https://api.github.com/repos/netbox-community/netbox/releases'
-
 SESSION_FILE_PATH = None
-
-# The file path where custom reports will be stored. A trailing slash is not needed. Note that the default value of
-# this setting is derived from the installed location.
-REPORTS_ROOT = os.environ.get("REPORTS_ROOT", os.path.join(BASE_DIR, "reports"))
 
 # Time zone (default: UTC)
 TIME_ZONE = os.environ.get("TIME_ZONE", "UTC")

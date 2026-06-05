@@ -1,5 +1,5 @@
-PYTHON_VER?=3.9
-NETBOX_VER?=v3.4.2
+PYTHON_VER?=3.12
+NETBOX_VER?=v4.5.9
 
 
 COMPOSE_FILE=./develop/docker-compose.yml
@@ -47,10 +47,10 @@ migrations:
 	docker-compose -f ${COMPOSE_FILE} -p ${BUILD_NAME} down
 
 
+test:
+	docker-compose -f ${COMPOSE_FILE} -p ${BUILD_NAME} run netbox python manage.py test --parallel --keepdb ${BUILD_NAME}
+	
+
 pbuild:
 	python3 -m pip install --upgrade build
 	python3 -m build
-
-pypipub:
-	python3 -m pip install --user --upgrade twine
-	python3 -m twine upload dist/*

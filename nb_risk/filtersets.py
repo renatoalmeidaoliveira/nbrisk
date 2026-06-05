@@ -9,7 +9,7 @@ from . import models
 class ThreatSourceFilterSet(NetBoxModelFilterSet):
     class Meta:
         model = models.ThreatSource
-        fields = ["threat_type", "capability", "intent", "targeting"]
+        fields = ["id", "name", "threat_type", "capability", "intent", "targeting", "description", "notes"]
 
 
 # ThreatEvent Filters
@@ -25,10 +25,25 @@ class ThreatEventFilterSet(NetBoxModelFilterSet):
 
 
 class VulnerabilityFilterSet(NetBoxModelFilterSet):
+    in_kev = django_filters.BooleanFilter()
 
     class Meta:
         model = models.Vulnerability
-        fields = ("name", "cve",)
+        fields = [
+            "id",
+            "name",
+            "cve",
+            "in_kev",
+            "description",
+            "notes",
+            "cvssaccessVector",
+            "cvssaccessComplexity",
+            "cvssauthentication",
+            "cvssconfidentialityImpact",
+            "cvssintegrityImpact",
+            "cvssavailabilityImpact",
+            "cvssbaseScore",
+            ]
 
     def search(self, queryset, name, value):
         if not value.strip():
@@ -45,6 +60,16 @@ class VulnerabilityFilterSet(NetBoxModelFilterSet):
 
 
 class VulnerabilityAssignmentFilterSet(NetBoxModelFilterSet):
+    
+    def search(self, queryset, name, value):
+        if not value.strip():
+            return queryset
+        qs_filter = (
+            Q(vulnerability__name__icontains=value) 
+            | Q(vulnerability__cve__icontains=value)
+        )
+        return queryset.filter(qs_filter)
+
     class Meta:
         model = models.VulnerabilityAssignment
         fields = ["vulnerability"]
@@ -70,3 +95,18 @@ class ControlFilterSet(NetBoxModelFilterSet):
             "category",
             "risk",
         ]
+
+# CPEMapping FilterSet
+
+class CPEMappingFilterSet(NetBoxModelFilterSet):
+    platform_id = django_filters.ModelMultipleChoiceFilter(
+        queryset=__import__('dcim.models', fromlist=['Platform']).Platform.objects.all(),
+    )
+    device_type_id = django_filters.ModelMultipleChoiceFilter(
+        queryset=__import__('dcim.models', fromlist=['DeviceType']).DeviceType.objects.all(),
+    )
+    verified = django_filters.BooleanFilter()
+
+    class Meta:
+        model = models.CPEMapping
+        fields = ['platform_id', 'device_type_id', 'cpe_vendor', 'cpe_product', 'cpe_part', 'verified']

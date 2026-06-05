@@ -1,15 +1,9 @@
 from rest_framework import serializers
-from django.contrib.contenttypes.models import ContentType
-from netbox.api.fields import ChoiceField, ContentTypeField, SerializedPKRelatedField
-from netbox.api.serializers import WritableNestedSerializer
-from utilities.api import get_serializer_for_model
-from drf_yasg.utils import swagger_serializer_method
-
+from netbox.api.fields import ChoiceField, ContentTypeField
+from netbox.api.gfk_fields import GFKSerializerField
 from netbox.api.serializers import NetBoxModelSerializer
-from nb_risk.api.nested_serializers import (
-    NestedThreatSourceSerializer,
-    NestedRiskSerializer,
-)
+from core.models import ObjectType
+
 from .. import models, choices
 
 # ThreatSource Serializers
@@ -36,6 +30,7 @@ class ThreatSourceSerializer(NetBoxModelSerializer):
             "targeting",
             "description",
         ]
+        brief_fields = ['id', 'url', 'display', 'name', 'description']
 
 # ThreatEvent Serializers
 
@@ -45,7 +40,6 @@ class ThreatEventSerializer(NetBoxModelSerializer):
     threat_source = serializers.SlugRelatedField(slug_field="name", queryset=models.ThreatSource.objects.all())
     relevance = ChoiceField(choices=choices.RelevanceChoices)
     likelihood = ChoiceField(choices=choices.LikelihoodChoices)
-
 
     def get_display(self, obj):
         return obj.name
@@ -63,11 +57,11 @@ class ThreatEventSerializer(NetBoxModelSerializer):
             "impact",
             "vulnerability",
         ]
+        brief_fields = ['id', 'url', 'display', 'name', 'description']
 
 # Vulnerability Serializers
 
 class VulnerabilitySerializer(NetBoxModelSerializer):
-    
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:vulnerability-detail")
     display = serializers.SerializerMethodField('get_display')
 
@@ -84,6 +78,7 @@ class VulnerabilitySerializer(NetBoxModelSerializer):
             "cve",
             "description",
         ]
+        brief_fields = ['id', 'url', 'display', 'name', 'description']
 
 
 # VulnerabilityAssignment Serializers
@@ -91,22 +86,28 @@ class VulnerabilitySerializer(NetBoxModelSerializer):
 class VulnerabilityAssignmentSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:vulnerabilityassignment-detail")
     display = serializers.SerializerMethodField('get_display')
+
+    # Use ObjectType (NetBox wrapper) filtered via the AssetTypes Q object for the content type field.
+    # Pass the Q object correctly as a positional filter argument.
     asset_object_type = ContentTypeField(
-        queryset=ContentType.objects.filter(choices.AssetTypes),
+        queryset=ObjectType.objects.filter(choices.AssetTypes),
         required=True,
-        allow_null=True
     )
-    asset = serializers.SerializerMethodField(read_only=True)
+
+    # GFKSerializerField replaces the manual get_serializer_for_model() pattern (NetBox 4.5+)
+    asset = GFKSerializerField(read_only=True)
+
     vulnerability = serializers.SlugRelatedField(slug_field="name", queryset=models.Vulnerability.objects.all())
 
-    asset_object_id = serializers.IntegerField(source='asset.id')
+    asset_id = serializers.IntegerField(write_only=True)
 
-    def get_asset(self, obj):
-        if obj.asset is None:
-            return None
-        serializer = get_serializer_for_model(obj.asset, prefix='Nested')
-        context = {'request': self.context['request']}
-        return serializer(obj.asset, context=context).data
+    def validate(self, data):
+        asset_id = data.get('asset_id')
+        asset_object_type = data.get('asset_object_type')
+        if asset_id and asset_object_type:
+            asset = asset_object_type.get_object_for_this_type(id=asset_id)
+            data['asset_id'] = asset.pk
+        return super().validate(data)
 
     def get_display(self, obj):
         return obj.name
@@ -118,20 +119,19 @@ class VulnerabilityAssignmentSerializer(NetBoxModelSerializer):
             "url",
             "display",
             "asset_object_type",
-            "asset_object_id",
+            "asset_id",
             "asset",
             "vulnerability",
         ]
+        brief_fields = ['id', 'url', 'display']
 
 # Risk Serializers
 
 class RiskSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:risk-detail")
     display = serializers.SerializerMethodField('get_display')
-    
     threat_event = serializers.SlugRelatedField(slug_field="name", queryset=models.ThreatEvent.objects.all())
 
-   
     def get_display(self, obj):
         return obj.name
 
@@ -153,11 +153,11 @@ class RiskSerializer(NetBoxModelSerializer):
 class ControlSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:control-detail")
     display = serializers.SerializerMethodField('get_display')
-    risk = NestedRiskSerializer(many=True,required=False, allow_null=True)
+    risk = RiskSerializer(many=True, required=False, allow_null=True, nested=True)
 
     def get_display(self, obj):
         return obj.name
-    
+
     class Meta:
         model = models.Control
         fields = [
@@ -167,5 +167,37 @@ class ControlSerializer(NetBoxModelSerializer):
             "name",
             "description",
             "notes",
-            "risk"
+            "risk",
         ]
+
+
+# CPEMapping Serializers
+
+class CPEMappingSerializer(NetBoxModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="plugins-api:nb_risk-api:cpemapping-detail")
+    display = serializers.SerializerMethodField('get_display')
+    platform = serializers.SerializerMethodField()
+    device_type = serializers.SerializerMethodField()
+
+    def get_display(self, obj):
+        return str(obj)
+
+    def get_platform(self, obj):
+        if obj.platform:
+            return {'id': obj.platform.pk, 'name': obj.platform.name}
+        return None
+
+    def get_device_type(self, obj):
+        if obj.device_type:
+            return {'id': obj.device_type.pk, 'model': obj.device_type.model}
+        return None
+
+    class Meta:
+        model = models.CPEMapping
+        fields = [
+            'id', 'url', 'display',
+            'platform', 'device_type',
+            'cpe_part', 'cpe_vendor', 'cpe_product', 'cpe_target_sw',
+            'verified', 'notes',
+        ]
+        brief_fields = ['id', 'url', 'display', 'cpe_vendor', 'cpe_product']

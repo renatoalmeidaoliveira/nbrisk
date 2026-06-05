@@ -30,8 +30,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url='https://github.com/renatoalmeidaoliveira/nbrisk',
-    author='Renato Almdida Oliveira',
-    author_email='renato.almeida.oliveira@gmail.com',
+    author='Renato Almdida Oliveira, Blake Parker',
+    author_email='renato.almeida.oliveira@gmail.com, blake.parker@e280.com',
     install_requires=[],
     packages=find_packages(),
     include_package_data=True,
@@ -39,5 +39,7 @@ setup(
         'Development Status :: 2 - Pre-Alpha',
         'Framework :: Django',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
     ]
 )

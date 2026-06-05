@@ -8,53 +8,33 @@ class CreateColumn(tables.Column):
     attrs = {"td": {"class": "text-end text-nowrap"}}
 
     def render(self, record):
-        cve = record["id"]
-        description = record["description"] 
-        if "accessVector" in record:
-            accessVector = record["accessVector"]
-        else:
-            accessVector = ""
-        if "accessComplexity" in record:
-            accessComplexity = record["accessComplexity"]
-        else:
-            accessComplexity = ""
-        if "authentication" in record:
-            authentication = record["authentication"]
-        else:
-            authentication = ""
-        if "confidentialityImpact" in record:
-            confidentialityImpact = record["confidentialityImpact"]
-        else:
-            confidentialityImpact = ""
-        if "integrityImpact" in record:
-            integrityImpact = record["integrityImpact"]
-        else:
-            integrityImpact = ""
-        if "availabilityImpact" in record:
-            availabilityImpact = record["availabilityImpact"]
-        else:
-            availabilityImpact = ""
-        if "baseScore" in record:
-            baseScore = record["baseScore"]
-        else:
-            baseScore = ""
+        cve = record.get("id", "")
+        description = record.get("description", "")
+        cvss_version = record.get("cvssVersion", "")
 
+        # Build notes to include CVSS version information
+        notes = description
+        if cvss_version:
+            notes = f"[CVSSv{cvss_version}] {description}"
 
         url = reverse("plugins:nb_risk:vulnerability_add")
         query = {
             "cve": cve,
-            "notes": description,
+            "notes": notes,
             "name": cve,
-            "cvssaccessVector": accessVector,
-            "cvssaccessComplexity": accessComplexity,
-            "cvssauthentication": authentication,
-            "cvssconfidentialityImpact": confidentialityImpact,
-            "cvssintegrityImpact": integrityImpact,
-            "cvssavailabilityImpact": availabilityImpact,
-            "cvssbaseScore": baseScore,
+            "cvssaccessVector": record.get("accessVector", ""),
+            "cvssaccessComplexity": record.get("accessComplexity", ""),
+            "cvssauthentication": record.get("authentication", ""),
+            "cvssconfidentialityImpact": record.get("confidentialityImpact", ""),
+            "cvssintegrityImpact": record.get("integrityImpact", ""),
+            "cvssavailabilityImpact": record.get("availabilityImpact", ""),
+            "cvssbaseScore": record.get("baseScore", ""),
         }
+        if record.get("return_url"):
+            query["return_url"] = record["return_url"]
+
         encoded_query = urlencode(query)
         url = f"{url}?{encoded_query}"
 
-        html = f'<a href={url} class="btn btn-primary btn-sm"><i class="mdi mdi-plus" aria-hidden="true"></i></a>'
+        html = f'<a href="{url}" class="btn btn-sm btn-primary" title="Import as Vulnerability"><i class="mdi mdi-plus-thick" aria-hidden="true"></i> Import</a>'
         return mark_safe(html)

@@ -1,5 +1,4 @@
-from extras.plugins import PluginMenu, PluginMenuItem, PluginMenuButton
-from utilities.choices import ButtonColorChoices
+from netbox.plugins import PluginMenu, PluginMenuItem, PluginMenuButton
 
 menu = PluginMenu(
     label="Risk Assessment",
@@ -17,7 +16,6 @@ menu = PluginMenu(
                             "plugins:nb_risk:threatsource_add",
                             "Add",
                             "mdi mdi-plus-thick",
-                            ButtonColorChoices.GREEN,
                             permissions=["nb_risk.add_threatsource"],
                         ),
                     ),
@@ -31,7 +29,6 @@ menu = PluginMenu(
                             "plugins:nb_risk:threatevent_add",
                             "Add",
                             "mdi mdi-plus-thick",
-                            ButtonColorChoices.GREEN,
                             permissions=["nb_risk.add_threatevent"],
                         ),
                     ),
@@ -50,14 +47,12 @@ menu = PluginMenu(
                             "plugins:nb_risk:vulnerability_add",
                             "Add",
                             "mdi mdi-plus-thick",
-                            ButtonColorChoices.GREEN,
                             permissions=["nb_risk.add_vulnerability"],
                         ),
                         PluginMenuButton(
                             "plugins:nb_risk:vulnerability_search",
                             "Search",
                             "mdi mdi-magnify",
-                            ButtonColorChoices.BLUE,
                             permissions=["nb_risk.view_vulnerability"],
                         ),
                     ),
@@ -66,6 +61,14 @@ menu = PluginMenu(
                     permissions=["nb_risk.view_vulnerabilityassignment"],
                     link="plugins:nb_risk:vulnerabilityassignment_list",
                     link_text="Vulnerability Assignments",
+                    buttons=(
+                        PluginMenuButton(
+                            "plugins:nb_risk:vulnerabilityassignment_import",
+                            "Import",
+                            "mdi mdi-upload",
+                            permissions=["nb_risk.add_vulnerabilityassignment"],
+                        ),
+                    ),
                 ),
             ),
         ),
@@ -81,7 +84,6 @@ menu = PluginMenu(
                             "plugins:nb_risk:risk_add",
                             "Add",
                             "mdi mdi-plus-thick",
-                            ButtonColorChoices.GREEN,
                             permissions=["nb_risk.add_risk"],
                         ),
                     ),
@@ -95,8 +97,50 @@ menu = PluginMenu(
                             "plugins:nb_risk:control_add",
                             "Add",
                             "mdi mdi-plus-thick",
-                            ButtonColorChoices.GREEN,
                             permissions=["nb_risk.add_control"],
+                        ),
+                    ),
+                ),
+            ),
+        ),
+        (
+            "CVE Integration",
+            (
+                PluginMenuItem(
+                    permissions=["nb_risk.view_cpemapping"],
+                    link="plugins:nb_risk:cpemapping_list",
+                    link_text="CPE Mappings",
+                    buttons=(
+                        PluginMenuButton(
+                            "plugins:nb_risk:cpemapping_add",
+                            "Add",
+                            "mdi mdi-plus-thick",
+                            permissions=["nb_risk.add_cpemapping"],
+                        ),
+                        PluginMenuButton(
+                            "plugins:nb_risk:cpe_lookup",
+                            "Lookup",
+                            "mdi mdi-magnify",
+                            permissions=["nb_risk.add_cpemapping"],
+                        ),
+                    ),
+                ),
+                PluginMenuItem(
+                    permissions=["core.view_job"],
+                    link="core:job_list",
+                    link_text="Sync Jobs",
+                    buttons=(
+                        PluginMenuButton(
+                            "plugins:nb_risk:sync_kev",
+                            "Sync KEV",
+                            "mdi mdi-shield-sync",
+                            permissions=["core.add_job"],
+                        ),
+                        PluginMenuButton(
+                            "plugins:nb_risk:sync_epss",
+                            "Sync EPSS",
+                            "mdi mdi-chart-line",
+                            permissions=["core.add_job"],
                         ),
                     ),
                 ),

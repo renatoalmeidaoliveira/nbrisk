@@ -1,5 +1,4 @@
 ---
-version: '3'
 services:
   netbox:
     build:
@@ -33,16 +32,16 @@ services:
       - ../nb_risk:/source/nb_risk
     tty: true
   postgres:
-    image: postgres:12
+    image: postgres:15
     env_file: dev.env
     volumes:
       - pgdata_nb_risk:/var/lib/postgresql/data
   redis:
-    image: redis:5-alpine
+    image: redis:7-alpine
     command:
       - sh
-      - -c  # this is to evaluate the $REDIS_PASSWORD from the env
-      - redis-server --appendonly yes --requirepass $$REDIS_PASSWORD  ## $$ because of docker-compose
+      - -c
+      - redis-server --appendonly yes --requirepass $$REDIS_PASSWORD
     env_file: ./dev.env
 volumes:
   pgdata_nb_risk:

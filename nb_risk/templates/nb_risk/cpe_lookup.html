@@ -1,0 +1,92 @@
+{% extends 'base/layout.html' %}
+
+{% block title %}CPE Lookup Assistant{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="page-header">CPE Lookup Assistant</h1>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header"><strong><i class="mdi mdi-magnify"></i> Search NVD CPE Dictionary</strong></div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">
+      Search the NVD CPE dictionary to find the exact vendor and product strings for a platform or device.
+      Click <strong>Create Mapping</strong> on any result to create a CPE Mapping for it.
+    </p>
+    <form method="get" class="d-flex gap-2">
+      <input type="text" name="keyword" value="{{ keyword }}" class="form-control"
+             placeholder="e.g. cisco nx-os, juniper junos, palo alto pan-os" autofocus>
+      <button type="submit" class="btn btn-primary text-nowrap">
+        <i class="mdi mdi-magnify"></i> Search
+      </button>
+    </form>
+  </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">
+  <strong>NVD API error:</strong> {{ error }}
+</div>
+{% endif %}
+
+{% if keyword and not error %}
+  {% if results %}
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <strong>Results for "{{ keyword }}"</strong>
+      <span class="badge bg-secondary">{{ total }} total — showing {{ results|length }}</span>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>CPE String</th>
+            <th>Title</th>
+            <th>Part</th>
+            <th>Vendor</th>
+            <th>Product</th>
+            <th>Target SW</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          <tr {% if r.deprecated %}class="text-muted"{% endif %}>
+            <td><code class="small">{{ r.cpe_name }}</code>
+              {% if r.deprecated %}<span class="badge bg-warning text-dark ms-1">Deprecated</span>{% endif %}
+            </td>
+            <td>{{ r.title|default:"—" }}</td>
+            <td><span class="badge bg-secondary">{{ r.part }}</span></td>
+            <td>{{ r.vendor }}</td>
+            <td>{{ r.product }}</td>
+            <td>{{ r.target_sw|default:"—" }}</td>
+            <td class="text-nowrap">
+              {% if not r.deprecated %}
+              <a href="{% url 'plugins:nb_risk:cpemapping_add' %}?cpe_vendor={{ r.vendor }}&cpe_product={{ r.product }}&cpe_part={{ r.part }}&cpe_target_sw={{ r.target_sw }}"
+                 class="btn btn-sm btn-primary">
+                <i class="mdi mdi-plus-thick"></i> Create Mapping
+              </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if total > results|length %}
+    <div class="card-footer text-muted small">
+      Showing {{ results|length }} of {{ total }} results. Refine your search to narrow results.
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div class="alert alert-info">
+    No CPE entries found for "<strong>{{ keyword }}</strong>". Try different keywords — use lowercase vendor names
+    (e.g. <code>cisco</code>, <code>juniper</code>) or product names (e.g. <code>nx-os</code>, <code>junos</code>).
+  </div>
+  {% endif %}
+{% endif %}
+
+{% endblock %}

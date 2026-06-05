@@ -1,15 +1,18 @@
-from extras.plugins import PluginConfig
+from netbox.plugins import PluginConfig
 from .version import __version__
+
 
 
 class NbriskConfig(PluginConfig):
     name = "nb_risk"
     base_url = "nb_risk"
-    verbose_name = "Risk Management"
-    description = "NIST 800-30 Risk Management for Netbox"
+    verbose_name = "Netbox Risk"
+    description = "Risk Management for NetBox, inspired by NIST 800-30."
     version = __version__
-    author = "Renato Almdida Oliveira"
-    author_email = "renato.almeida.oliveira@gmail.com"
+    author = "Blake Parker"
+    author_email = "blake.parker@e280.com"
+    min_version = "4.5.0"
+    max_version = "4.5.99"
     required_settings = []
     default_settings = {
         "supported_assets": [
@@ -19,7 +22,13 @@ class NbriskConfig(PluginConfig):
             "dcim.site",
         ],
         "additional_assets": [],
+        # Deprecated: use NetBox's built-in HTTP_PROXIES setting in configuration.py instead
+        "proxies": {},
+        "nvd_api_key": None,
     }
-
+    
+    def ready(self):
+        from . import signals, jobs  # noqa: F401 — registers system jobs via @system_job decorator
+        super().ready()
 
 config = NbriskConfig  # noqa

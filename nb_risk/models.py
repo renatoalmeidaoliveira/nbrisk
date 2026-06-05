@@ -2,8 +2,11 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.urls import reverse
+from django.db.models.functions import Lower
+from django.core.exceptions import ValidationError
 
 from netbox.models import NetBoxModel
+from dcim.models import Platform, DeviceType
 from . import choices
 
 # ThreatSource Model
@@ -35,6 +38,9 @@ class ThreatSource(NetBoxModel):
     def get_absolute_url(self):
         return reverse("plugins:nb_risk:threatsource", args=[self.pk])
 
+    class Meta:
+        ordering = ('name',)
+
 
 # Vulnerability Model
 
@@ -45,6 +51,72 @@ class Vulnerability(NetBoxModel):
     cve = models.CharField("CVE", max_length=100, blank=True)
     description = models.CharField("Description", max_length=100, blank=True)
     notes = models.TextField("Notes", blank=True)
+
+    # CISA KEV fields — populated by sync_kev management command
+    in_kev = models.BooleanField(
+        "In CISA KEV",
+        default=False,
+        help_text="This CVE appears in the CISA Known Exploited Vulnerabilities catalog",
+    )
+    kev_date_added = models.DateField(
+        "KEV Date Added",
+        null=True,
+        blank=True,
+        help_text="Date this CVE was added to the CISA KEV catalog",
+    )
+    kev_ransomware_use = models.CharField(
+        "KEV Ransomware Use",
+        max_length=50,
+        blank=True,
+        help_text="Whether this CVE is known to be used in ransomware campaigns",
+    )
+    kev_required_action = models.TextField(
+        "KEV Required Action",
+        blank=True,
+        help_text="CISA-recommended remediation action",
+    )
+    kev_due_date = models.DateField(
+        "KEV Due Date",
+        null=True,
+        blank=True,
+        help_text="CISA remediation due date for federal agencies",
+    )
+    kev_vendor_project = models.CharField(
+        "KEV Vendor/Project",
+        max_length=200,
+        blank=True,
+    )
+    kev_product = models.CharField(
+        "KEV Product",
+        max_length=200,
+        blank=True,
+    )
+
+    # EPSS fields — populated by sync_epss management command
+    epss_score = models.DecimalField(
+        "EPSS Score",
+        max_digits=10,
+        decimal_places=9,
+        null=True,
+        blank=True,
+        help_text="FIRST.org Exploit Prediction Scoring System score (0.0–1.0). "
+                  "Probability this CVE will be exploited in the next 30 days.",
+    )
+    epss_percentile = models.DecimalField(
+        "EPSS Percentile",
+        max_digits=10,
+        decimal_places=9,
+        null=True,
+        blank=True,
+        help_text="Percentage of all CVEs with a lower EPSS score.",
+    )
+    epss_date = models.DateField(
+        "EPSS Date",
+        null=True,
+        blank=True,
+        help_text="Date the EPSS score was last updated.",
+    )
+
     cvssaccessVector = models.CharField(
         "Access Vector (AV)", max_length=100, blank=True
     )
@@ -63,9 +135,8 @@ class Vulnerability(NetBoxModel):
     cvssavailabilityImpact = models.CharField(
         "Availability Impact (A)", max_length=100, blank=True
     )
-    cvssbaseScore = models.FloatField("Base Score", max_length=100, blank=True)
+    cvssbaseScore = models.FloatField("Base Score", max_length=100, blank=True, null=True,)
 
-    @property
     def affected_assets(self):
         return self.vulnerability_assignments.count()
 
@@ -76,8 +147,15 @@ class Vulnerability(NetBoxModel):
         return reverse("plugins:nb_risk:vulnerability", args=[self.pk])
 
     class Meta:
+        ordering = ('name',)
         verbose_name = "Vulnerability"
         verbose_name_plural = "Vulnerabilities"
+        constraints = (
+            models.UniqueConstraint(
+                Lower('name'),
+                 name="unique_vuln_name"
+            ),
+        )
 
 
 # VulnearbilityAssingment Model
@@ -110,8 +188,9 @@ class VulnerabilityAssignment(NetBoxModel):
 
     def __str__(self):
         return f"{self.asset} - {self.vulnerability.name}"
-
+   
     class Meta:
+        ordering = ('pk',)
         constraints = (
             models.UniqueConstraint(
                 fields=("asset_object_type", "asset_id", "vulnerability"),
@@ -161,6 +240,9 @@ class ThreatEvent(NetBoxModel):
 
     def get_absolute_url(self):
         return reverse("plugins:nb_risk:threatevent", args=[self.pk])
+
+    class Meta:
+        ordering = ('name',)
 
 
 # Risk Model
@@ -233,6 +315,9 @@ class Risk(NetBoxModel):
     def get_absolute_url(self):
         return reverse("plugins:nb_risk:risk", args=[self.pk])
 
+    class Meta:
+        ordering = ('name',)
+
 
 # Control Model
 
@@ -258,3 +343,97 @@ class Control(NetBoxModel):
 
     def get_absolute_url(self):
         return reverse("plugins:nb_risk:control", args=[self.pk])
+
+    class Meta:
+        ordering = ('name',)
+
+
+# CPEMapping Model
+
+CPE_PART_CHOICES = (
+    ('o', 'Operating System (o)'),
+    ('a', 'Application (a)'),
+    ('h', 'Hardware (h)'),
+)
+
+
+class CPEMapping(NetBoxModel):
+    """
+    Maps a NetBox Platform or DeviceType to a verified NVD CPE 2.3 string.
+    Used by the Device CVE tab to build precise CPE queries instead of
+    guessing vendor/product names from free-text fields.
+
+    Either platform or device_type must be set (not both, not neither).
+    The full CPE is assembled as:
+        cpe:2.3:{part}:{vendor}:{product}:*:*:*:*:*:{target_sw}:*:*
+    with the device's software_version substituted for the version component.
+    """
+    platform = models.ForeignKey(
+        to='dcim.Platform',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='cpe_mappings',
+        help_text='Map this CPE to a specific platform (e.g. NX-OS, IOS-XE)',
+    )
+    device_type = models.ForeignKey(
+        to='dcim.DeviceType',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='cpe_mappings',
+        help_text='Map this CPE to a specific device type (takes precedence over platform)',
+    )
+    cpe_part = models.CharField(
+        'CPE Part',
+        max_length=1,
+        choices=CPE_PART_CHOICES,
+        default='o',
+        help_text='CPE part type: o=OS, a=Application, h=Hardware',
+    )
+    cpe_vendor = models.CharField(
+        'CPE Vendor',
+        max_length=100,
+        help_text='NVD CPE vendor component (e.g. cisco, juniper, paloaltonetworks)',
+    )
+    cpe_product = models.CharField(
+        'CPE Product',
+        max_length=100,
+        help_text='NVD CPE product component (e.g. nx-os, junos, pan-os)',
+    )
+    cpe_target_sw = models.CharField(
+        'CPE Target Software',
+        max_length=100,
+        blank=True,
+        help_text='Optional 8th CPE component for scoping (e.g. nexus_9000_series). '
+                  'Leave blank if not needed.',
+    )
+    verified = models.BooleanField(
+        'Verified',
+        default=False,
+        help_text='Mark as verified once confirmed against NVD CPE dictionary',
+    )
+    notes = models.TextField('Notes', blank=True)
+
+    def __str__(self):
+        scope = self.platform or self.device_type
+        return f"{scope} → cpe:2.3:{self.cpe_part}:{self.cpe_vendor}:{self.cpe_product}"
+
+    def get_absolute_url(self):
+        return reverse('plugins:nb_risk:cpemapping', args=[self.pk])
+
+    def clean(self):
+        if not self.platform and not self.device_type:
+            raise ValidationError('Either a Platform or a Device Type must be specified.')
+        if self.platform and self.device_type:
+            raise ValidationError('Specify either a Platform or a Device Type, not both.')
+
+    def build_cpe(self, version='*'):
+        """Return a full CPE 2.3 string with the given version."""
+        target_sw = self.cpe_target_sw or '*'
+        return f"cpe:2.3:{self.cpe_part}:{self.cpe_vendor}:{self.cpe_product}:{version}:*:*:*:*:{target_sw}:*:*"
+
+    class Meta:
+        ordering = ('cpe_vendor', 'cpe_product')
+        verbose_name = 'CPE Mapping'
+        verbose_name_plural = 'CPE Mappings'
