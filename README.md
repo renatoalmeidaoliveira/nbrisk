@@ -1,6 +1,7 @@
 ## Netbox NBRisk
 [NetBox](https://github.com/netbox-community/netbox) plugin inspired by NIST 800-30 Risk Management.
 
+> **Note:** The original upstream repository is no longer actively maintained. This fork adds compatibility with NetBox 4.5.x and requires Python 3.12+.
 
 ## Compatibility
 
@@ -11,14 +12,14 @@ See the [compatibility matrix](COMPATIBILITY.md) for supported NetBox versions.
 Add to `local_requirements.txt` to ensure automatic re-installation during NetBox upgrades:
 
 ```shell
-echo "echo "NbRisk==^45.6.0" >> local_requirements.txt
+echo "NbRisk==^45.6.1" >> local_requirements.txt echo "git+https://github.com/droolingtaz/nbrisk.git@main#egg=NbRisk" >> /opt/netbox/local_requirements.txt
 ```
 
 Install, migrate, and run the initial data syncs:
 
 ```shell
 source /opt/netbox/venv/bin/activate
-pip install NbRisk==^45.6.0
+pip install NbRisk==^45.6.1
 cd /opt/netbox/netbox
 python3 manage.py migrate nb_risk
 python3 manage.py sync_kev       # sync CISA Known Exploited Vulnerabilities catalog

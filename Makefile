@@ -54,3 +54,8 @@ test:
 pbuild:
 	python3 -m pip install --upgrade build
 	python3 -m build
+
+
+pypipub:
+	python3 -m pip install --user --upgrade twine
+	python3 -m twine upload --verbose dist/* 
