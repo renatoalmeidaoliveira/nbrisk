@@ -11,7 +11,7 @@ See the [compatibility matrix](COMPATIBILITY.md) for supported NetBox versions.
 Add to `local_requirements.txt` to ensure automatic re-installation during NetBox upgrades:
 
 ```shell
-echo "git+https://github.com/droolingtaz/nbrisk.git@main#egg=NbRisk" >> /opt/netbox/local_requirements.txt
+echo "echo "NbRisk==^45.6.0" >> local_requirements.txt
 ```
 
 Install, migrate, and run the initial data syncs:
