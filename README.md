@@ -18,7 +18,7 @@ Install, migrate, and run the initial data syncs:
 
 ```shell
 source /opt/netbox/venv/bin/activate
-pip install "git+https://github.com/droolingtaz/nbrisk.git@main#egg=NbRisk"
+pip install NbRisk==^45.6.0
 cd /opt/netbox/netbox
 python3 manage.py migrate nb_risk
 python3 manage.py sync_kev       # sync CISA Known Exploited Vulnerabilities catalog
