@@ -1,8 +1,6 @@
 ## Netbox NBRisk
 [NetBox](https://github.com/netbox-community/netbox) plugin inspired by NIST 800-30 Risk Management.
 
-> **Note:** The original upstream repository is no longer actively maintained. This fork adds compatibility with NetBox 4.5.x and requires Python 3.12+.
-
 ## Compatibility
 
 See the [compatibility matrix](COMPATIBILITY.md) for supported NetBox versions.
